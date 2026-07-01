@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as WhiteLabelRouteImport } from './routes/white-label'
+import { Route as FinanceiroRouteImport } from './routes/financeiro'
 import { Route as DisparadorRouteImport } from './routes/disparador'
 import { Route as ClinicasRouteImport } from './routes/clinicas'
 import { Route as IndexRouteImport } from './routes/index'
@@ -17,6 +18,11 @@ import { Route as IndexRouteImport } from './routes/index'
 const WhiteLabelRoute = WhiteLabelRouteImport.update({
   id: '/white-label',
   path: '/white-label',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FinanceiroRoute = FinanceiroRouteImport.update({
+  id: '/financeiro',
+  path: '/financeiro',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DisparadorRoute = DisparadorRouteImport.update({
@@ -39,12 +45,14 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/clinicas': typeof ClinicasRoute
   '/disparador': typeof DisparadorRoute
+  '/financeiro': typeof FinanceiroRoute
   '/white-label': typeof WhiteLabelRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/clinicas': typeof ClinicasRoute
   '/disparador': typeof DisparadorRoute
+  '/financeiro': typeof FinanceiroRoute
   '/white-label': typeof WhiteLabelRoute
 }
 export interface FileRoutesById {
@@ -52,20 +60,28 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/clinicas': typeof ClinicasRoute
   '/disparador': typeof DisparadorRoute
+  '/financeiro': typeof FinanceiroRoute
   '/white-label': typeof WhiteLabelRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/clinicas' | '/disparador' | '/white-label'
+  fullPaths: '/' | '/clinicas' | '/disparador' | '/financeiro' | '/white-label'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/clinicas' | '/disparador' | '/white-label'
-  id: '__root__' | '/' | '/clinicas' | '/disparador' | '/white-label'
+  to: '/' | '/clinicas' | '/disparador' | '/financeiro' | '/white-label'
+  id:
+    | '__root__'
+    | '/'
+    | '/clinicas'
+    | '/disparador'
+    | '/financeiro'
+    | '/white-label'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ClinicasRoute: typeof ClinicasRoute
   DisparadorRoute: typeof DisparadorRoute
+  FinanceiroRoute: typeof FinanceiroRoute
   WhiteLabelRoute: typeof WhiteLabelRoute
 }
 
@@ -76,6 +92,13 @@ declare module '@tanstack/react-router' {
       path: '/white-label'
       fullPath: '/white-label'
       preLoaderRoute: typeof WhiteLabelRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/financeiro': {
+      id: '/financeiro'
+      path: '/financeiro'
+      fullPath: '/financeiro'
+      preLoaderRoute: typeof FinanceiroRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/disparador': {
@@ -106,6 +129,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ClinicasRoute: ClinicasRoute,
   DisparadorRoute: DisparadorRoute,
+  FinanceiroRoute: FinanceiroRoute,
   WhiteLabelRoute: WhiteLabelRoute,
 }
 export const routeTree = rootRouteImport
