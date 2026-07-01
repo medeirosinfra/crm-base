@@ -9,10 +9,16 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as WhiteLabelRouteImport } from './routes/white-label'
 import { Route as DisparadorRouteImport } from './routes/disparador'
 import { Route as ClinicasRouteImport } from './routes/clinicas'
 import { Route as IndexRouteImport } from './routes/index'
 
+const WhiteLabelRoute = WhiteLabelRouteImport.update({
+  id: '/white-label',
+  path: '/white-label',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DisparadorRoute = DisparadorRouteImport.update({
   id: '/disparador',
   path: '/disparador',
@@ -33,34 +39,45 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/clinicas': typeof ClinicasRoute
   '/disparador': typeof DisparadorRoute
+  '/white-label': typeof WhiteLabelRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/clinicas': typeof ClinicasRoute
   '/disparador': typeof DisparadorRoute
+  '/white-label': typeof WhiteLabelRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/clinicas': typeof ClinicasRoute
   '/disparador': typeof DisparadorRoute
+  '/white-label': typeof WhiteLabelRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/clinicas' | '/disparador'
+  fullPaths: '/' | '/clinicas' | '/disparador' | '/white-label'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/clinicas' | '/disparador'
-  id: '__root__' | '/' | '/clinicas' | '/disparador'
+  to: '/' | '/clinicas' | '/disparador' | '/white-label'
+  id: '__root__' | '/' | '/clinicas' | '/disparador' | '/white-label'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ClinicasRoute: typeof ClinicasRoute
   DisparadorRoute: typeof DisparadorRoute
+  WhiteLabelRoute: typeof WhiteLabelRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/white-label': {
+      id: '/white-label'
+      path: '/white-label'
+      fullPath: '/white-label'
+      preLoaderRoute: typeof WhiteLabelRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/disparador': {
       id: '/disparador'
       path: '/disparador'
@@ -89,6 +106,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ClinicasRoute: ClinicasRoute,
   DisparadorRoute: DisparadorRoute,
+  WhiteLabelRoute: WhiteLabelRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
