@@ -13,6 +13,7 @@ import { Route as WhiteLabelRouteImport } from './routes/white-label'
 import { Route as PdvRouteImport } from './routes/pdv'
 import { Route as FinanceiroRouteImport } from './routes/financeiro'
 import { Route as DisparadorRouteImport } from './routes/disparador'
+import { Route as ContatosRouteImport } from './routes/contatos'
 import { Route as ClinicasRouteImport } from './routes/clinicas'
 import { Route as AutomacoesRouteImport } from './routes/automacoes'
 import { Route as IndexRouteImport } from './routes/index'
@@ -37,6 +38,11 @@ const DisparadorRoute = DisparadorRouteImport.update({
   path: '/disparador',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ContatosRoute = ContatosRouteImport.update({
+  id: '/contatos',
+  path: '/contatos',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ClinicasRoute = ClinicasRouteImport.update({
   id: '/clinicas',
   path: '/clinicas',
@@ -57,6 +63,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/automacoes': typeof AutomacoesRoute
   '/clinicas': typeof ClinicasRoute
+  '/contatos': typeof ContatosRoute
   '/disparador': typeof DisparadorRoute
   '/financeiro': typeof FinanceiroRoute
   '/pdv': typeof PdvRoute
@@ -66,6 +73,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/automacoes': typeof AutomacoesRoute
   '/clinicas': typeof ClinicasRoute
+  '/contatos': typeof ContatosRoute
   '/disparador': typeof DisparadorRoute
   '/financeiro': typeof FinanceiroRoute
   '/pdv': typeof PdvRoute
@@ -76,6 +84,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/automacoes': typeof AutomacoesRoute
   '/clinicas': typeof ClinicasRoute
+  '/contatos': typeof ContatosRoute
   '/disparador': typeof DisparadorRoute
   '/financeiro': typeof FinanceiroRoute
   '/pdv': typeof PdvRoute
@@ -87,6 +96,7 @@ export interface FileRouteTypes {
     | '/'
     | '/automacoes'
     | '/clinicas'
+    | '/contatos'
     | '/disparador'
     | '/financeiro'
     | '/pdv'
@@ -96,6 +106,7 @@ export interface FileRouteTypes {
     | '/'
     | '/automacoes'
     | '/clinicas'
+    | '/contatos'
     | '/disparador'
     | '/financeiro'
     | '/pdv'
@@ -105,6 +116,7 @@ export interface FileRouteTypes {
     | '/'
     | '/automacoes'
     | '/clinicas'
+    | '/contatos'
     | '/disparador'
     | '/financeiro'
     | '/pdv'
@@ -115,6 +127,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AutomacoesRoute: typeof AutomacoesRoute
   ClinicasRoute: typeof ClinicasRoute
+  ContatosRoute: typeof ContatosRoute
   DisparadorRoute: typeof DisparadorRoute
   FinanceiroRoute: typeof FinanceiroRoute
   PdvRoute: typeof PdvRoute
@@ -151,6 +164,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DisparadorRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/contatos': {
+      id: '/contatos'
+      path: '/contatos'
+      fullPath: '/contatos'
+      preLoaderRoute: typeof ContatosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/clinicas': {
       id: '/clinicas'
       path: '/clinicas'
@@ -179,6 +199,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AutomacoesRoute: AutomacoesRoute,
   ClinicasRoute: ClinicasRoute,
+  ContatosRoute: ContatosRoute,
   DisparadorRoute: DisparadorRoute,
   FinanceiroRoute: FinanceiroRoute,
   PdvRoute: PdvRoute,
