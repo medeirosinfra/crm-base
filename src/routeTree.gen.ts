@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as WhiteLabelRouteImport } from './routes/white-label'
 import { Route as RelatoriosRouteImport } from './routes/relatorios'
 import { Route as PdvRouteImport } from './routes/pdv'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as FinanceiroRouteImport } from './routes/financeiro'
 import { Route as DisparadorRouteImport } from './routes/disparador'
 import { Route as ContatosRouteImport } from './routes/contatos'
@@ -32,6 +33,11 @@ const RelatoriosRoute = RelatoriosRouteImport.update({
 const PdvRoute = PdvRouteImport.update({
   id: '/pdv',
   path: '/pdv',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FinanceiroRoute = FinanceiroRouteImport.update({
@@ -72,6 +78,7 @@ export interface FileRoutesByFullPath {
   '/contatos': typeof ContatosRoute
   '/disparador': typeof DisparadorRoute
   '/financeiro': typeof FinanceiroRoute
+  '/login': typeof LoginRoute
   '/pdv': typeof PdvRoute
   '/relatorios': typeof RelatoriosRoute
   '/white-label': typeof WhiteLabelRoute
@@ -83,6 +90,7 @@ export interface FileRoutesByTo {
   '/contatos': typeof ContatosRoute
   '/disparador': typeof DisparadorRoute
   '/financeiro': typeof FinanceiroRoute
+  '/login': typeof LoginRoute
   '/pdv': typeof PdvRoute
   '/relatorios': typeof RelatoriosRoute
   '/white-label': typeof WhiteLabelRoute
@@ -95,6 +103,7 @@ export interface FileRoutesById {
   '/contatos': typeof ContatosRoute
   '/disparador': typeof DisparadorRoute
   '/financeiro': typeof FinanceiroRoute
+  '/login': typeof LoginRoute
   '/pdv': typeof PdvRoute
   '/relatorios': typeof RelatoriosRoute
   '/white-label': typeof WhiteLabelRoute
@@ -108,6 +117,7 @@ export interface FileRouteTypes {
     | '/contatos'
     | '/disparador'
     | '/financeiro'
+    | '/login'
     | '/pdv'
     | '/relatorios'
     | '/white-label'
@@ -119,6 +129,7 @@ export interface FileRouteTypes {
     | '/contatos'
     | '/disparador'
     | '/financeiro'
+    | '/login'
     | '/pdv'
     | '/relatorios'
     | '/white-label'
@@ -130,6 +141,7 @@ export interface FileRouteTypes {
     | '/contatos'
     | '/disparador'
     | '/financeiro'
+    | '/login'
     | '/pdv'
     | '/relatorios'
     | '/white-label'
@@ -142,6 +154,7 @@ export interface RootRouteChildren {
   ContatosRoute: typeof ContatosRoute
   DisparadorRoute: typeof DisparadorRoute
   FinanceiroRoute: typeof FinanceiroRoute
+  LoginRoute: typeof LoginRoute
   PdvRoute: typeof PdvRoute
   RelatoriosRoute: typeof RelatoriosRoute
   WhiteLabelRoute: typeof WhiteLabelRoute
@@ -168,6 +181,13 @@ declare module '@tanstack/react-router' {
       path: '/pdv'
       fullPath: '/pdv'
       preLoaderRoute: typeof PdvRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/financeiro': {
@@ -222,6 +242,7 @@ const rootRouteChildren: RootRouteChildren = {
   ContatosRoute: ContatosRoute,
   DisparadorRoute: DisparadorRoute,
   FinanceiroRoute: FinanceiroRoute,
+  LoginRoute: LoginRoute,
   PdvRoute: PdvRoute,
   RelatoriosRoute: RelatoriosRoute,
   WhiteLabelRoute: WhiteLabelRoute,
@@ -229,3 +250,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

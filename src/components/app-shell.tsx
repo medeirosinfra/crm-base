@@ -2,8 +2,12 @@ import type { ReactNode } from "react";
 import { Sparkles, Radio } from "lucide-react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
+import { useTenantTheme } from "@/hooks/use-tenant-theme";
 
 export function AppShell({ children }: { children: ReactNode }) {
+  // Aplica o tema white-label da clínica logada (logo, cores, branding)
+  useTenantTheme();
+
   return (
     <SidebarProvider>
       <div className="flex min-h-screen w-full bg-background text-foreground">

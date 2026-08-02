@@ -1,10 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Plus, Search, MoreVertical, MessageCircle, Users } from "lucide-react";
+import { Plus, Search, MoreVertical, MessageCircle, Users, Loader2 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { AppShell } from "@/components/app-shell";
+import { RequireAuth } from "@/components/require-auth";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { clinicsMock, type ClinicStatus } from "@/lib/mock-data";
+import { listTenants, type Tenant } from "@/lib/supabase/tenants";
 
 export const Route = createFileRoute("/clinicas")({
   head: () => ({
@@ -17,7 +19,11 @@ export const Route = createFileRoute("/clinicas")({
       },
     ],
   }),
-  component: ClinicasPage,
+  component: () => (
+    <RequireAuth>
+      <ClinicasPage />
+    </RequireAuth>
+  ),
 });
 
 const specialtyStyles: Record<string, string> = {
@@ -27,6 +33,8 @@ const specialtyStyles: Record<string, string> = {
   Fisioterapia: "bg-success/15 text-success",
   Psicologia: "bg-warning/15 text-warning",
 };
+
+type ClinicStatus = Tenant["status"];
 
 const statusLabels: Record<ClinicStatus, { label: string; className: string }> = {
   ativa: { label: "Ativa", className: "bg-success/15 text-success border-success/30" },
@@ -42,6 +50,40 @@ const statusLabels: Record<ClinicStatus, { label: string; className: string }> =
 };
 
 function ClinicasPage() {
+  const { data: tenants, isLoading, error } = useQuery({
+    queryKey: ["tenants"],
+    queryFn: listTenants,
+  });
+
+  if (isLoading) {
+    return (
+      <AppShell>
+        <div className="grid min-h-[60vh] place-items-center">
+          <div className="flex flex-col items-center gap-3 text-muted-foreground">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="text-sm">Carregando clínicas...</p>
+          </div>
+        </div>
+      </AppShell>
+    );
+  }
+
+  if (error) {
+    return (
+      <AppShell>
+        <div className="grid min-h-[60vh] place-items-center">
+          <div className="max-w-md rounded-xl border border-destructive/30 bg-destructive/10 p-6 text-center">
+            <p className="font-semibold text-destructive">Erro ao carregar clínicas</p>
+            <p className="mt-2 text-sm text-muted-foreground">{String(error)}</p>
+            <p className="mt-3 text-xs text-muted-foreground">
+              Verifique se você está autenticado e tem permissão de super_admin.
+            </p>
+          </div>
+        </div>
+      </AppShell>
+    );
+  }
+
   return (
     <AppShell>
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-8">
@@ -92,7 +134,7 @@ function ClinicasPage() {
         </div>
 
         <section className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {clinicsMock.map((c) => {
+          {(tenants ?? []).map((c) => {
             const status = statusLabels[c.status];
             return (
               <Card
@@ -102,15 +144,15 @@ function ClinicasPage() {
                 <div className="flex items-start justify-between gap-2">
                   <span
                     className={`inline-flex items-center rounded-md px-2.5 py-1 text-[11px] font-semibold ${
-                      specialtyStyles[c.specialty] ?? "bg-muted text-muted-foreground"
+                      specialtyStyles[c.especialidade ?? ""] ?? "bg-muted text-muted-foreground"
                     }`}
                   >
-                    {c.specialty}
+                    {c.especialidade ?? "Clínica"}
                   </span>
                   <div className="flex items-center gap-2">
                     <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
                       <Users className="h-3.5 w-3.5" />
-                      {c.patients} Pacientes
+                      {c.mrr ? `R$ ${c.mrr}` : "Sem MRR"}
                     </span>
                     <button
                       aria-label="Ações"
@@ -121,9 +163,9 @@ function ClinicasPage() {
                   </div>
                 </div>
 
-                <h3 className="mt-4 font-display text-lg font-bold text-foreground">{c.name}</h3>
+                <h3 className="mt-4 font-display text-lg font-bold text-foreground">{c.nome}</h3>
                 <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                  {c.description}
+                  {c.descricao ?? "Sem descrição"}
                 </p>
 
                 <div className="mt-5 flex items-center justify-between border-t border-border/60 pt-4 text-xs">
@@ -134,7 +176,7 @@ function ClinicasPage() {
                   </span>
                   <span className="inline-flex items-center gap-1.5 text-muted-foreground">
                     <MessageCircle className="h-3.5 w-3.5 text-primary" />
-                    {c.whatsappSessions} sessão{c.whatsappSessions > 1 ? "ões" : ""} WAHA
+                    {c.whatsapp_sessions ?? 0} sessão{(c.whatsapp_sessions ?? 0) > 1 ? "ões" : ""} WAHA
                   </span>
                 </div>
               </Card>

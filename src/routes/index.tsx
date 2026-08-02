@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Building2, DollarSign, TrendingDown, MessageCircle, Users, Activity } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
+import { RequireAuth } from "@/components/require-auth";
 import { Card } from "@/components/ui/card";
 import { saasMetrics, clinicsMock } from "@/lib/mock-data";
 
@@ -15,7 +16,11 @@ export const Route = createFileRoute("/")({
       },
     ],
   }),
-  component: DashboardPage,
+  component: () => (
+    <RequireAuth>
+      <DashboardPage />
+    </RequireAuth>
+  ),
 });
 
 function formatBRL(value: number) {
