@@ -17,5 +17,18 @@ export default defineConfig({
   nitro: {
     preset: "node-server",
     output: { dir: ".output" },
+    routeRules: {
+      // Proxy: /supabase/* → Supabase local (Kong 54321)
+      // Usa o IP do HOST (172.16.0.50) pois o container alcança o host via rede.
+      // 127.0.0.1 dentro do container é o próprio container (não funciona).
+      "/supabase/**": {
+        proxy: "http://172.16.0.50:54321/**",
+      },
+      // Proxy: /waha/* → WAHA local (porta 3000)
+      // Para o Disparador funcionar pela internet
+      "/waha/**": {
+        proxy: "http://172.16.0.50:3000/**",
+      },
+    },
   },
 });
