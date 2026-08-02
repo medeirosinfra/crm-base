@@ -11,12 +11,14 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as WhiteLabelRouteImport } from './routes/white-label'
 import { Route as RelatoriosRouteImport } from './routes/relatorios'
+import { Route as ProcedimentosRouteImport } from './routes/procedimentos'
 import { Route as PacientesRouteImport } from './routes/pacientes'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as FinanceiroRouteImport } from './routes/financeiro'
 import { Route as DisparadorRouteImport } from './routes/disparador'
 import { Route as ContatosRouteImport } from './routes/contatos'
 import { Route as ClinicasRouteImport } from './routes/clinicas'
+import { Route as CampanhasRouteImport } from './routes/campanhas'
 import { Route as AutomacoesRouteImport } from './routes/automacoes'
 import { Route as AgendaRouteImport } from './routes/agenda'
 import { Route as IndexRouteImport } from './routes/index'
@@ -29,6 +31,11 @@ const WhiteLabelRoute = WhiteLabelRouteImport.update({
 const RelatoriosRoute = RelatoriosRouteImport.update({
   id: '/relatorios',
   path: '/relatorios',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProcedimentosRoute = ProcedimentosRouteImport.update({
+  id: '/procedimentos',
+  path: '/procedimentos',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PacientesRoute = PacientesRouteImport.update({
@@ -61,6 +68,11 @@ const ClinicasRoute = ClinicasRouteImport.update({
   path: '/clinicas',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CampanhasRoute = CampanhasRouteImport.update({
+  id: '/campanhas',
+  path: '/campanhas',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AutomacoesRoute = AutomacoesRouteImport.update({
   id: '/automacoes',
   path: '/automacoes',
@@ -81,12 +93,14 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/agenda': typeof AgendaRoute
   '/automacoes': typeof AutomacoesRoute
+  '/campanhas': typeof CampanhasRoute
   '/clinicas': typeof ClinicasRoute
   '/contatos': typeof ContatosRoute
   '/disparador': typeof DisparadorRoute
   '/financeiro': typeof FinanceiroRoute
   '/login': typeof LoginRoute
   '/pacientes': typeof PacientesRoute
+  '/procedimentos': typeof ProcedimentosRoute
   '/relatorios': typeof RelatoriosRoute
   '/white-label': typeof WhiteLabelRoute
 }
@@ -94,12 +108,14 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/agenda': typeof AgendaRoute
   '/automacoes': typeof AutomacoesRoute
+  '/campanhas': typeof CampanhasRoute
   '/clinicas': typeof ClinicasRoute
   '/contatos': typeof ContatosRoute
   '/disparador': typeof DisparadorRoute
   '/financeiro': typeof FinanceiroRoute
   '/login': typeof LoginRoute
   '/pacientes': typeof PacientesRoute
+  '/procedimentos': typeof ProcedimentosRoute
   '/relatorios': typeof RelatoriosRoute
   '/white-label': typeof WhiteLabelRoute
 }
@@ -108,12 +124,14 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/agenda': typeof AgendaRoute
   '/automacoes': typeof AutomacoesRoute
+  '/campanhas': typeof CampanhasRoute
   '/clinicas': typeof ClinicasRoute
   '/contatos': typeof ContatosRoute
   '/disparador': typeof DisparadorRoute
   '/financeiro': typeof FinanceiroRoute
   '/login': typeof LoginRoute
   '/pacientes': typeof PacientesRoute
+  '/procedimentos': typeof ProcedimentosRoute
   '/relatorios': typeof RelatoriosRoute
   '/white-label': typeof WhiteLabelRoute
 }
@@ -123,12 +141,14 @@ export interface FileRouteTypes {
     | '/'
     | '/agenda'
     | '/automacoes'
+    | '/campanhas'
     | '/clinicas'
     | '/contatos'
     | '/disparador'
     | '/financeiro'
     | '/login'
     | '/pacientes'
+    | '/procedimentos'
     | '/relatorios'
     | '/white-label'
   fileRoutesByTo: FileRoutesByTo
@@ -136,12 +156,14 @@ export interface FileRouteTypes {
     | '/'
     | '/agenda'
     | '/automacoes'
+    | '/campanhas'
     | '/clinicas'
     | '/contatos'
     | '/disparador'
     | '/financeiro'
     | '/login'
     | '/pacientes'
+    | '/procedimentos'
     | '/relatorios'
     | '/white-label'
   id:
@@ -149,12 +171,14 @@ export interface FileRouteTypes {
     | '/'
     | '/agenda'
     | '/automacoes'
+    | '/campanhas'
     | '/clinicas'
     | '/contatos'
     | '/disparador'
     | '/financeiro'
     | '/login'
     | '/pacientes'
+    | '/procedimentos'
     | '/relatorios'
     | '/white-label'
   fileRoutesById: FileRoutesById
@@ -163,12 +187,14 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AgendaRoute: typeof AgendaRoute
   AutomacoesRoute: typeof AutomacoesRoute
+  CampanhasRoute: typeof CampanhasRoute
   ClinicasRoute: typeof ClinicasRoute
   ContatosRoute: typeof ContatosRoute
   DisparadorRoute: typeof DisparadorRoute
   FinanceiroRoute: typeof FinanceiroRoute
   LoginRoute: typeof LoginRoute
   PacientesRoute: typeof PacientesRoute
+  ProcedimentosRoute: typeof ProcedimentosRoute
   RelatoriosRoute: typeof RelatoriosRoute
   WhiteLabelRoute: typeof WhiteLabelRoute
 }
@@ -187,6 +213,13 @@ declare module '@tanstack/react-router' {
       path: '/relatorios'
       fullPath: '/relatorios'
       preLoaderRoute: typeof RelatoriosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/procedimentos': {
+      id: '/procedimentos'
+      path: '/procedimentos'
+      fullPath: '/procedimentos'
+      preLoaderRoute: typeof ProcedimentosRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/pacientes': {
@@ -231,6 +264,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ClinicasRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/campanhas': {
+      id: '/campanhas'
+      path: '/campanhas'
+      fullPath: '/campanhas'
+      preLoaderRoute: typeof CampanhasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/automacoes': {
       id: '/automacoes'
       path: '/automacoes'
@@ -259,12 +299,14 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AgendaRoute: AgendaRoute,
   AutomacoesRoute: AutomacoesRoute,
+  CampanhasRoute: CampanhasRoute,
   ClinicasRoute: ClinicasRoute,
   ContatosRoute: ContatosRoute,
   DisparadorRoute: DisparadorRoute,
   FinanceiroRoute: FinanceiroRoute,
   LoginRoute: LoginRoute,
   PacientesRoute: PacientesRoute,
+  ProcedimentosRoute: ProcedimentosRoute,
   RelatoriosRoute: RelatoriosRoute,
   WhiteLabelRoute: WhiteLabelRoute,
 }

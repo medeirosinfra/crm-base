@@ -12,6 +12,8 @@ import {
   BarChart3,
   Settings,
   LogOut,
+  Scissors,
+  Megaphone,
 } from "lucide-react";
 import {
   Sidebar,
@@ -34,6 +36,8 @@ const primaryNav = [
   { title: "Agenda & Agendamentos", url: "/agenda", icon: CalendarDays },
   { title: "Pacientes", url: "/pacientes", icon: Users },
   { title: "Contatos & Leads", url: "/contatos", icon: Users2 },
+  { title: "Procedimentos & Tratamentos", url: "/procedimentos", icon: Scissors },
+  { title: "Campanhas", url: "/campanhas", icon: Megaphone },
   { title: "Disparador Multicanal", url: "/disparador", icon: MessageSquareMore },
   { title: "Financeiro", url: "/financeiro", icon: Wallet },
 ];

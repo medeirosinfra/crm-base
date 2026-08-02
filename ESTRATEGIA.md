@@ -69,16 +69,21 @@ Criar uma **linha de produtos SaaS white-label** para revenda, cada um focado nu
 - ✅ GitHub público (`medeirosinfra/crm-base`)
 
 ### Em andamento / a fazer:
-- ⏳ Configuração por ramo (mostrar/ocultar módulos conforme especialidade)
-- ⏳ Agenda/Agendamentos (tabela já existe no banco)
 - ⏳ Procedimentos/Tratamentos
 - ⏳ Campanhas (disparo em massa)
 - ⏳ CRUD completo de Clínicas (criar/editar)
 - ⏳ Configurar domínio no Cloudflare Tunnel (`crm.medeirossolucoestech.com.br`)
 - ⏳ Roles/permissões avançadas
 
+### Implementado recentemente (02/08):
+- ✅ **Configuração por ramo** — seletor de segmento no White-Label (Odontologia, Estética, Dermato, Fisio, Psi). Define módulos ativos da clínica
+- ✅ **Agenda & Agendamentos** — página com dados reais do banco
+- ✅ **Pacientes** — gestão completa com cadastro real
+- ✅ **Sidebar reestruturada** — grupos "Gestão da Clínica" e "Configuração"
+- ✅ **Logout real** no sidebar
+
 ### Removido:
-- ❌ PDV (módulo "Coming Soon" — remover da navegação, não faz sentido para clínicas)
+- ❌ PDV (não faz sentido para clínicas de serviços — vai para o futuro produto de comércio)
 
 ---
 
