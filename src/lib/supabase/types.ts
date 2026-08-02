@@ -33,6 +33,11 @@ export interface Database {
           email: string | null;
           nascimento: string | null;
           observacoes: string | null;
+          cpf: string | null;
+          genero: string | null;
+          endereco: string | null;
+          origem: string | null;
+          ultima_consulta: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -42,10 +47,23 @@ export interface Database {
           id: string;
           tenant_id: string;
           paciente_id: string | null;
+          procedimento_id: string | null;
+          profissional_id: string | null;
+          valor: number | null;
           data: string;
           tipo: string | null;
           status: string;
           observacoes: string | null;
+          created_at: string;
+        };
+      };
+      profissionais: {
+        Row: {
+          id: string;
+          tenant_id: string;
+          nome: string;
+          especialidade: string | null;
+          ativo: boolean;
           created_at: string;
         };
       };

@@ -108,8 +108,20 @@ Quando voltarmos a trabalhar, seguir este roteiro:
 
 ## 🔗 LINKS ÚTEIS
 
-- **App em produção**: `http://172.16.0.50:3110`
+- **App em produção (internet)**: `https://crm.medeirossolucoestech.com.br`
+- **App (local)**: `http://172.16.0.50:3110`
 - **GitHub**: https://github.com/medeirosinfra/crm-base
-- **Supabase Studio**: `http://172.16.0.50:54321/`
+- **Supabase via app**: `https://crm.medeirossolucoestech.com.br/supabase`
+- **Supabase Studio (local)**: `http://172.16.0.50:54321/`
 - **Admin**: `admin@medeirossolucoestech.com.br` / `Master@2026`
 - **Backup banco**: `~/backups/`
+
+## 🔧 INFRA IMPORTANTE (deploy internet)
+
+- **Preset NITRO = `node-server`** (NÃO cloudflare-module — que quebra assets no Docker, causa tela branca). Configurado em `vite.config.ts`.
+- **Proxy no Nitro** (`vite.config.ts` routeRules):
+  - `/supabase/**` → `http://172.16.0.50:54321/**` (Kong local via IP do host)
+  - `/waha/**` → `http://172.16.0.50:3000/**` (WAHA local)
+- **`.env` usa**: `VITE_SUPABASE_URL=https://crm.medeirossolucoestech.com.br/supabase` (o browser fala só com o domínio do app, que proxyia pro host). NUNCA usar IP interno `172.16.0.50` nas URLs VITE_ (browser externo não alcança).
+- **IMPORTANTE**: `127.0.0.1` no proxy NÃO funciona (dentro do container é ele mesmo). Usar `172.16.0.50` (IP do host, alcançável da rede bridge).
+- **Cloudflare Tunnel**: rota `crm.medeirossolucoestech.com.br` → `172.16.0.50:3110`. A rota `supabase.medeirossolucoestech.com.br` não é mais necessária (o proxy resolve).
