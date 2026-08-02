@@ -12,4 +12,10 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  // Deploy no Docker/Node (não Cloudflare): usa preset node-server
+  // que serve os assets estáticos corretamente.
+  nitro: {
+    preset: "node-server",
+    output: { dir: ".output" },
+  },
 });

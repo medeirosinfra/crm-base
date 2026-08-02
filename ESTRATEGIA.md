@@ -70,7 +70,10 @@ Criar uma **linha de produtos SaaS white-label** para revenda, cada um focado nu
 
 ### Em andamento / a fazer:
 - ⏳ Configurar domínio no Cloudflare Tunnel (`crm.medeirossolucoestech.com.br`)
-- ⏳ Roles/permissões avançadas
+
+### Implementado recentemente (02/08):
+- ✅ **Roles & Permissões (RBAC)** — matriz de cargos (super_admin, admin, gerente, financeiro, staff) × módulos. Guard `RequireRole` por rota + sidebar filtrada por cargo. Protegidas: clinicas (super_admin), financeiro, white-label.
+- ✅ **CRUD completo de Clínicas** — criar/editar/excluir com branding (cor, domínio, WAHA), segmento, status, plano (testado via API)
 
 ### Implementado recentemente (02/08):
 - ✅ **CRUD completo de Clínicas** — criar/editar/excluir com branding (cor, domínio, WAHA), segmento, status, plano (testado via API)
