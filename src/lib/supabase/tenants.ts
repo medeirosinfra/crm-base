@@ -92,6 +92,12 @@ export async function getTenantBySlug(slug: string): Promise<Tenant | null> {
   return data as Tenant;
 }
 
+/** Exclui um tenant (clínica). Requer super_admin. */
+export async function deleteTenant(id: string): Promise<void> {
+  const { error } = await supabase.from("tenants").delete().eq("id", id);
+  if (error) throw new Error(`Erro ao excluir clínica: ${error.message}`);
+}
+
 // ---------------- PACIENTES (área logada do tenant) ----------------
 
 export async function listPacientes(): Promise<Paciente[]> {

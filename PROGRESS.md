@@ -72,7 +72,9 @@ CRM SaaS **white-label multi-tenant** para clínicas: 1 código, N clínicas, ca
 - [ ] Relatórios (vendas, fechamento, top produtos) com dados reais
 - [x] Financeiro (caixa, recebimentos, despesas) — ✅ implementado (02/08)
 - [x] Contatos & Leads — ✅ implementado (02/08)
-- [ ] PDV real
+- [x] Procedimentos & Tratamentos — ✅ implementado (02/08)
+- [x] Campanhas (WhatsApp) — ✅ implementado (02/08)
+- [ ] PDV real (produto futuro de comércio, não clínicas)
 - [ ] Automações n8n integradas
 - [ ] Testes automatizados (Vitest)
 - [ ] CI/CD (build automático no push)

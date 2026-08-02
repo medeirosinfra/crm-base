@@ -69,11 +69,13 @@ Criar uma **linha de produtos SaaS white-label** para revenda, cada um focado nu
 - ✅ GitHub público (`medeirosinfra/crm-base`)
 
 ### Em andamento / a fazer:
-- ⏳ Procedimentos/Tratamentos
-- ⏳ Campanhas (disparo em massa)
 - ⏳ CRUD completo de Clínicas (criar/editar)
 - ⏳ Configurar domínio no Cloudflare Tunnel (`crm.medeirossolucoestech.com.br`)
 - ⏳ Roles/permissões avançadas
+
+### Implementado recentemente (02/08):
+- ✅ **Procedimentos & Tratamentos** — catálogo por segmento, categoria, duração, preço (migration 004)
+- ✅ **Campanhas** — disparo em massa WhatsApp, status rascunho/enviada, seleção de sessão WAHA (migration 004)
 
 ### Implementado recentemente (02/08):
 - ✅ **Configuração por ramo** — seletor de segmento no White-Label (Odontologia, Estética, Dermato, Fisio, Psi). Define módulos ativos da clínica
