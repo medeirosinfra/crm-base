@@ -1,55 +1,19 @@
-<div align="center">
+# MedeirosInfra Business Suite
 
-# 🏥 CRM Base — White-Label SaaS para Clínicas
-
-**Plataforma SaaS multi-tenant white-label**: CRM, gestão de clínicas, disparo de WhatsApp e tema dinâmico por cliente — tudo em uma única base de código revendável.
-
-[![TanStack Start](https://img.shields.io/badge/TanStack_Start-FF4154?style=for-the-badge&logo=tanstack&logoColor=white)](https://tanstack.com)
-[![React 19](https://img.shields.io/badge/React_19-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev)
-[![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://typescriptlang.org)
-[![Tailwind v4](https://img.shields.io/badge/Tailwind_v4-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
-[![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)](https://postgresql.org)
-[![WhatsApp WAHA](https://img.shields.io/badge/WhatsApp-WAHA-25D366?style=for-the-badge&logo=whatsapp&logoColor=white)](https://waha.devlike.pro)
-[![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://docker.com)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-
-</div>
+Plataforma SaaS multi-tenant white-label (CRM + ERP + PDV + Automação WhatsApp via WAHA), construída em TanStack Start + React 19 + Vite 7 + Tailwind v4.
 
 ---
 
-## ✨ Funcionalidades
+## 📦 Stack
 
-- 🏢 **Multi-tenant white-label** — 1 código, N clínicas, cada uma com subdomínio, logo e cores próprias
-- 🎨 **Tema dinâmico por clínica** — cores/logo aplicadas automaticamente por tenant (CSS variables)
-- 📨 **Disparador WhatsApp (WAHA)** — envio de mensagens em tempo real com status das sessões
-- 🏥 **Gestão de clínicas** — painel master com todas as clínicas, planos e status
-- 🔐 **Auth com RLS** — isolamento total de dados entre tenants (Row Level Security no Supabase)
-- 🧩 **Design system profissional** — shadcn/ui + Radix + Tailwind v4
+- **Frontend/SSR:** TanStack Start v1, React 19, Vite 7
+- **UI:** Tailwind CSS v4, shadcn/ui, Radix UI, Lucide Icons
+- **Backend/DB:** PostgreSQL + Supabase (RLS multi-tenant)
+- **WhatsApp:** WAHA (WhatsApp HTTP API) — motor único e oficial
+- **Automação:** N8N
+- **Infra:** Docker + Nginx Reverse Proxy + SSL
 
-## 🗂️ Módulos
-
-| Módulo | Rota | Status |
-|---|---|---|
-| Visão Geral SaaS (dashboard) | `/` | ✅ |
-| Gestão de Clínicas | `/clinicas` | ✅ |
-| White-Label (tema/branding) | `/white-label` | ✅ |
-| Disparador WhatsApp | `/disparador` | ✅ |
-| Login | `/login` | ✅ |
-| Financeiro & Estoque | `/financeiro` | ⏳ |
-| PDV & Vendas | `/pdv` | ⏳ |
-| Contatos & Leads | `/contatos` | ⏳ |
-| Automações & IA | `/automacoes` | ⏳ |
-| Relatórios | `/relatorios` | ⏳ |
-
-## 🛠️ Stack
-
-- **Frontend/SSR**: TanStack Start v1, React 19, Vite, TypeScript
-- **UI**: Tailwind CSS v4, shadcn/ui, Radix UI, Lucide Icons
-- **Backend/DB**: Supabase (PostgreSQL) + RLS multi-tenant
-- **WhatsApp**: WAHA (WhatsApp HTTP API)
-- **Automação**: N8N
-- **Infra**: Docker
+---
 
 ## 🚀 Rodar em desenvolvimento
 
@@ -58,36 +22,113 @@ bun install
 bun run dev
 ```
 
-## 🐳 Deploy com Docker
+App em `http://localhost:8080`.
+
+---
+
+## 🐳 Build de produção com Docker (Linux)
+
+### 1. Clonar o repositório
 
 ```bash
-# 1. Configure o .env (copie de .env.example e preencha)
-cp .env.example .env
+git clone https://github.com/SEU_USUARIO/medeirosinfra-business-suite.git
+cd medeirosinfra-business-suite
+```
 
-# 2. Build com as variáveis VITE_ (importantes para o client)
+### 2. Configurar variáveis de ambiente
+
+Copie `.env.example` para `.env` e preencha:
+
+```bash
+cp .env.example .env
+nano .env
+```
+
+### 3. Subir com docker-compose
+
+```bash
 docker compose up -d --build
 ```
 
-> ⚠️ **Importante**: as variáveis `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `VITE_WAHA_BASE_URL` e `VITE_WAHA_API_KEY` são embutidas no bundle no **build-time** — por isso são passadas como `build args` no `docker-compose.yml`.
+O app fica disponível em `http://SEU_SERVIDOR:3000`.
 
-## 📂 Estrutura
+### 4. Nginx Reverse Proxy (exemplo)
+
+```nginx
+server {
+  listen 443 ssl http2;
+  server_name crm.seudominio.com.br;
+
+  ssl_certificate     /etc/letsencrypt/live/crm.seudominio.com.br/fullchain.pem;
+  ssl_certificate_key /etc/letsencrypt/live/crm.seudominio.com.br/privkey.pem;
+
+  location / {
+    proxy_pass http://127.0.0.1:3000;
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "upgrade";
+  }
+}
+```
+
+Depois:
+
+```bash
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+---
+
+## 🔧 Comandos úteis
+
+```bash
+docker compose logs -f app     # ver logs
+docker compose restart app     # reiniciar
+docker compose down            # parar
+docker compose pull && docker compose up -d --build   # atualizar
+```
+
+---
+
+## 📤 Exportar / baixar o código
+
+### Opção A — Baixar ZIP direto do Lovable
+No editor Lovable → botão **Code Editor** (sidebar) → **Download codebase** no rodapé da árvore de arquivos. Requer workspace pago.
+
+### Opção B — Conectar ao GitHub (recomendado)
+1. No editor Lovable, menu **+** (canto inferior esquerdo do chat) → **GitHub → Connect project**.
+2. Autorize o Lovable GitHub App.
+3. Selecione a conta/organização e clique **Create Repository**.
+4. Sincronização é bidirecional: mudanças no Lovable vão pro GitHub e vice-versa em tempo real.
+5. Depois, no seu servidor:
+
+```bash
+git clone https://github.com/SEU_USUARIO/SEU_REPO.git
+cd SEU_REPO
+docker compose up -d --build
+```
+
+Docs completos: https://docs.lovable.dev/integrations/github
+
+---
+
+## 🏗 Estrutura
 
 ```
 src/
-├── routes/          # páginas (TanStack Router file-based)
-├── components/      # shadcn/ui + layout (sidebar, app-shell)
-├── lib/
-│   ├── supabase/    # client, server, tenants service, types
-│   ├── waha.ts      # integração WhatsApp
-│   ├── theme.ts     # tema white-label dinâmico
-│   └── auth-context.tsx
-├── hooks/           # use-tenant-theme
-└── styles.css       # design system (CSS variables)
-database/
-├── migrations/      # schema + seed (multi-tenant + RLS)
-└── migrate.sh
+├── routes/          # Rotas file-based (TanStack Router)
+├── components/ui/   # shadcn/ui
+├── integrations/    # Supabase client, auth middleware
+├── lib/             # Server functions (.functions.ts) e utils
+└── styles.css       # Design system (tokens oklch, Tailwind v4)
 ```
 
-## 📄 Licença
+---
 
-MIT License — veja [LICENSE](LICENSE).
+## 📝 Licença
+
+Proprietário — MedeirosInfra © 2026

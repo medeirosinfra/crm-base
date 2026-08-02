@@ -31,8 +31,19 @@ CRM SaaS **white-label multi-tenant** para clínicas: 1 código, N clínicas, ca
 | 11 | Gestão de Clínicas CRUD completo | ⏳ | Lista integrada (React Query). Falta criar/editar clínica completa. |
 | 12 | Auth por subdomínio + middleware | ✅ IMPLEMENTADO | Login GoTrue + RequireAuth protegendo rotas. Página `/login` com resolução de subdomínio. |
 | 13 | Roles/permissões | ⏳ | super_admin, admin, gerente, financeiro |
-| 14 | Deploy Docker | ⏳ | Dockerfile + compose + domínio |
-| 15 | Publicar no GitHub como `crm-base` | ⏳ | Repo público profissional |
+| 14 | Deploy Docker | ✅ IMPLEMENTADO | Container `medeirosinfra-suite` na porta 3110. Dockerfile com build args para VITE_*. Acessível em `http://172.16.0.50:3110`. |
+| 15 | Publicar no GitHub como `crm-base` | ✅ IMPLEMENTADO | Repo `crm-base` (privado). Descrição + topics profissionais. |
+
+## 🐳 Deploy Docker (implementado 02/08)
+- `Dockerfile` com **build args** para `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `VITE_WAHA_BASE_URL`, `VITE_WAHA_API_KEY` (vars VITE_ são embutidas no bundle em build-time)
+- `docker-compose.yml` na porta **3110** (3000 está ocupada pelo WAHA)
+- Container `medeirosinfra-suite` rodando, todas as páginas 200
+- Acesso: `http://172.16.0.50:3110`
+
+## 🚀 Publicado no GitHub
+- Repo: `medeirosinfra/crm-base` (PRIVADO — tornar público quando decidir)
+- Descrição: CRM SaaS white-label multi-tenant para clínicas
+- Topics: crm, whitelabel, multitenant, saas, whatsapp, supabase, tanstack
 
 ## 🔐 Autenticação (implementado 02/08)
 - `src/lib/auth-context.tsx` — contexto de auth (user, tenantId, cargo, signIn, signOut)
