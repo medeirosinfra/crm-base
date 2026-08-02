@@ -11,13 +11,14 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as WhiteLabelRouteImport } from './routes/white-label'
 import { Route as RelatoriosRouteImport } from './routes/relatorios'
-import { Route as PdvRouteImport } from './routes/pdv'
+import { Route as PacientesRouteImport } from './routes/pacientes'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as FinanceiroRouteImport } from './routes/financeiro'
 import { Route as DisparadorRouteImport } from './routes/disparador'
 import { Route as ContatosRouteImport } from './routes/contatos'
 import { Route as ClinicasRouteImport } from './routes/clinicas'
 import { Route as AutomacoesRouteImport } from './routes/automacoes'
+import { Route as AgendaRouteImport } from './routes/agenda'
 import { Route as IndexRouteImport } from './routes/index'
 
 const WhiteLabelRoute = WhiteLabelRouteImport.update({
@@ -30,9 +31,9 @@ const RelatoriosRoute = RelatoriosRouteImport.update({
   path: '/relatorios',
   getParentRoute: () => rootRouteImport,
 } as any)
-const PdvRoute = PdvRouteImport.update({
-  id: '/pdv',
-  path: '/pdv',
+const PacientesRoute = PacientesRouteImport.update({
+  id: '/pacientes',
+  path: '/pacientes',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -65,6 +66,11 @@ const AutomacoesRoute = AutomacoesRouteImport.update({
   path: '/automacoes',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AgendaRoute = AgendaRouteImport.update({
+  id: '/agenda',
+  path: '/agenda',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -73,38 +79,41 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/agenda': typeof AgendaRoute
   '/automacoes': typeof AutomacoesRoute
   '/clinicas': typeof ClinicasRoute
   '/contatos': typeof ContatosRoute
   '/disparador': typeof DisparadorRoute
   '/financeiro': typeof FinanceiroRoute
   '/login': typeof LoginRoute
-  '/pdv': typeof PdvRoute
+  '/pacientes': typeof PacientesRoute
   '/relatorios': typeof RelatoriosRoute
   '/white-label': typeof WhiteLabelRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/agenda': typeof AgendaRoute
   '/automacoes': typeof AutomacoesRoute
   '/clinicas': typeof ClinicasRoute
   '/contatos': typeof ContatosRoute
   '/disparador': typeof DisparadorRoute
   '/financeiro': typeof FinanceiroRoute
   '/login': typeof LoginRoute
-  '/pdv': typeof PdvRoute
+  '/pacientes': typeof PacientesRoute
   '/relatorios': typeof RelatoriosRoute
   '/white-label': typeof WhiteLabelRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/agenda': typeof AgendaRoute
   '/automacoes': typeof AutomacoesRoute
   '/clinicas': typeof ClinicasRoute
   '/contatos': typeof ContatosRoute
   '/disparador': typeof DisparadorRoute
   '/financeiro': typeof FinanceiroRoute
   '/login': typeof LoginRoute
-  '/pdv': typeof PdvRoute
+  '/pacientes': typeof PacientesRoute
   '/relatorios': typeof RelatoriosRoute
   '/white-label': typeof WhiteLabelRoute
 }
@@ -112,50 +121,54 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/agenda'
     | '/automacoes'
     | '/clinicas'
     | '/contatos'
     | '/disparador'
     | '/financeiro'
     | '/login'
-    | '/pdv'
+    | '/pacientes'
     | '/relatorios'
     | '/white-label'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/agenda'
     | '/automacoes'
     | '/clinicas'
     | '/contatos'
     | '/disparador'
     | '/financeiro'
     | '/login'
-    | '/pdv'
+    | '/pacientes'
     | '/relatorios'
     | '/white-label'
   id:
     | '__root__'
     | '/'
+    | '/agenda'
     | '/automacoes'
     | '/clinicas'
     | '/contatos'
     | '/disparador'
     | '/financeiro'
     | '/login'
-    | '/pdv'
+    | '/pacientes'
     | '/relatorios'
     | '/white-label'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AgendaRoute: typeof AgendaRoute
   AutomacoesRoute: typeof AutomacoesRoute
   ClinicasRoute: typeof ClinicasRoute
   ContatosRoute: typeof ContatosRoute
   DisparadorRoute: typeof DisparadorRoute
   FinanceiroRoute: typeof FinanceiroRoute
   LoginRoute: typeof LoginRoute
-  PdvRoute: typeof PdvRoute
+  PacientesRoute: typeof PacientesRoute
   RelatoriosRoute: typeof RelatoriosRoute
   WhiteLabelRoute: typeof WhiteLabelRoute
 }
@@ -176,11 +189,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RelatoriosRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/pdv': {
-      id: '/pdv'
-      path: '/pdv'
-      fullPath: '/pdv'
-      preLoaderRoute: typeof PdvRouteImport
+    '/pacientes': {
+      id: '/pacientes'
+      path: '/pacientes'
+      fullPath: '/pacientes'
+      preLoaderRoute: typeof PacientesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -225,6 +238,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AutomacoesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/agenda': {
+      id: '/agenda'
+      path: '/agenda'
+      fullPath: '/agenda'
+      preLoaderRoute: typeof AgendaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -237,13 +257,14 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AgendaRoute: AgendaRoute,
   AutomacoesRoute: AutomacoesRoute,
   ClinicasRoute: ClinicasRoute,
   ContatosRoute: ContatosRoute,
   DisparadorRoute: DisparadorRoute,
   FinanceiroRoute: FinanceiroRoute,
   LoginRoute: LoginRoute,
-  PdvRoute: PdvRoute,
+  PacientesRoute: PacientesRoute,
   RelatoriosRoute: RelatoriosRoute,
   WhiteLabelRoute: WhiteLabelRoute,
 }

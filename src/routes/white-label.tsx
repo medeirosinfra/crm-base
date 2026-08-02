@@ -156,6 +156,36 @@ function WhiteLabelPage() {
 
                 <div>
                   <Label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                    Segmento da clínica (define os módulos ativos)
+                  </Label>
+                  <Select
+                    value={selected.especialidade ?? ""}
+                    onValueChange={(v) => {
+                      queryClient.setQueryData(["tenants"], (old?: Tenant[]) =>
+                        old?.map((t) =>
+                          t.id === selected.id ? { ...t, especialidade: v } : t,
+                        ),
+                      );
+                    }}
+                  >
+                    <SelectTrigger className="mt-2 h-11">
+                      <SelectValue placeholder="Escolha o segmento..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Odontologia">🦷 Odontologia</SelectItem>
+                      <SelectItem value="Estética Avançada">✨ Estética Avançada</SelectItem>
+                      <SelectItem value="Dermatologia">🧴 Dermatologia</SelectItem>
+                      <SelectItem value="Fisioterapia">💪 Fisioterapia</SelectItem>
+                      <SelectItem value="Psicologia">🧠 Psicologia</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="mt-1.5 text-[10px] text-muted-foreground">
+                    O segmento define quais módulos e funcionalidades a clínica vê no painel.
+                  </p>
+                </div>
+
+                <div>
+                  <Label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
                     Sessão WAHA (WhatsApp)
                   </Label>
                   <Input
@@ -179,6 +209,7 @@ function WhiteLabelPage() {
                       cor_segundaria: selected.cor_segundaria,
                       dominio: selected.dominio,
                       waha_sessao: selected.waha_sessao,
+                      especialidade: selected.especialidade,
                     })
                   }
                   disabled={saveMutation.isPending}

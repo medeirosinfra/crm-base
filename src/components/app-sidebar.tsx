@@ -1,11 +1,12 @@
-import { Link, useRouterState } from "@tanstack/react-router";
+import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import {
   LayoutDashboard,
   Stethoscope,
   MessageSquareMore,
   Palette,
   Wallet,
-  ShoppingCart,
+  CalendarDays,
+  Users,
   Bot,
   Users2,
   BarChart3,
@@ -25,27 +26,36 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { useAuth } from "@/lib/auth-context";
 
 const primaryNav = [
   { title: "Visão Geral SaaS", url: "/", icon: LayoutDashboard },
   { title: "Gestão de Clínicas (CRM)", url: "/clinicas", icon: Stethoscope },
+  { title: "Agenda & Agendamentos", url: "/agenda", icon: CalendarDays },
+  { title: "Pacientes", url: "/pacientes", icon: Users },
+  { title: "Contatos & Leads", url: "/contatos", icon: Users2 },
   { title: "Disparador Multicanal", url: "/disparador", icon: MessageSquareMore },
-  { title: "Configuração White-Label", url: "/white-label", icon: Palette },
-  { title: "Financeiro & Estoque", url: "/financeiro", icon: Wallet },
+  { title: "Financeiro", url: "/financeiro", icon: Wallet },
 ];
 
-const businessNav = [
-  { title: "PDV & Vendas", url: "/pdv", icon: ShoppingCart },
+const configNav = [
+  { title: "White-Label (Branding)", url: "/white-label", icon: Palette },
   { title: "Automações & IA", url: "/automacoes", icon: Bot },
-  { title: "Contatos & Leads", url: "/contatos", icon: Users2 },
   { title: "Relatórios", url: "/relatorios", icon: BarChart3 },
 ];
 
 export function AppSidebar() {
   const { state } = useSidebar();
+  const navigate = useNavigate();
+  const { signOut, user } = useAuth();
   const collapsed = state === "collapsed";
   const pathname = useRouterState({ select: (r) => r.location.pathname });
   const isActive = (url: string) => (url === "/" ? pathname === "/" : pathname.startsWith(url));
+
+  const handleLogout = async () => {
+    await signOut();
+    navigate({ to: "/login" });
+  };
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
@@ -60,7 +70,7 @@ export function AppSidebar() {
                 MedeirosInfra
               </p>
               <p className="truncate text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-                Business Suite
+                Clínicas Suite
               </p>
             </div>
           )}
@@ -71,7 +81,7 @@ export function AppSidebar() {
         <SidebarGroup>
           {!collapsed && (
             <SidebarGroupLabel className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-              Painel White-Label
+              Gestão da Clínica
             </SidebarGroupLabel>
           )}
           <SidebarGroupContent>
@@ -82,11 +92,11 @@ export function AppSidebar() {
                     asChild
                     isActive={isActive(item.url)}
                     tooltip={item.title}
-                    className="h-11 rounded-lg data-[active=true]:gradient-primary data-[active=true]:text-primary-foreground data-[active=true]:shadow-glow data-[active=true]:font-semibold"
+                    className="h-10 rounded-lg text-sidebar-foreground/80 hover:text-sidebar-foreground data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground data-[active=true]:font-semibold"
                   >
                     <Link to={item.url} className="flex items-center gap-3">
-                      <item.icon className="h-4.5 w-4.5 shrink-0" />
-                      {!collapsed && <span className="truncate">{item.title}</span>}
+                      <item.icon className="h-4 w-4 shrink-0" />
+                      {!collapsed && <span className="truncate text-sm">{item.title}</span>}
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -98,12 +108,12 @@ export function AppSidebar() {
         <SidebarGroup className="mt-4">
           {!collapsed && (
             <SidebarGroupLabel className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-              Business Suite
+              Configuração
             </SidebarGroupLabel>
           )}
           <SidebarGroupContent>
             <SidebarMenu>
-              {businessNav.map((item) => (
+              {configNav.map((item) => (
                 <SidebarMenuItem key={item.url}>
                   <SidebarMenuButton
                     asChild
@@ -126,22 +136,24 @@ export function AppSidebar() {
       <SidebarFooter className="border-t border-sidebar-border p-3">
         <div className="flex items-center gap-3 rounded-lg bg-sidebar-accent/50 p-2.5">
           <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full gradient-primary text-xs font-bold text-primary-foreground">
-            MM
+            {user?.email?.charAt(0).toUpperCase() || "M"}
           </div>
           {!collapsed && (
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-semibold text-sidebar-foreground">
-                Marcio Medeiros
+                {user?.email ?? "Usuário"}
               </p>
               <p className="truncate text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-                Administrador Master
+                Painel da Clínica
               </p>
             </div>
           )}
           {!collapsed && (
             <button
               type="button"
+              onClick={handleLogout}
               aria-label="Sair"
+              title="Sair"
               className="grid h-8 w-8 shrink-0 place-items-center rounded-md text-destructive hover:bg-destructive/10"
             >
               <LogOut className="h-4 w-4" />
@@ -151,6 +163,7 @@ export function AppSidebar() {
         {!collapsed && (
           <button
             type="button"
+            onClick={handleLogout}
             className="mt-2 flex items-center justify-center gap-2 rounded-lg border border-destructive/40 bg-destructive/5 px-3 py-2 text-xs font-semibold text-destructive transition-colors hover:bg-destructive/10"
           >
             <LogOut className="h-3.5 w-3.5" />
@@ -160,7 +173,7 @@ export function AppSidebar() {
         {!collapsed && (
           <div className="mt-2 flex items-center gap-2">
             <Settings className="h-3.5 w-3.5 text-muted-foreground" />
-            <span className="text-[10px] text-muted-foreground">v1.0 · WAHA + N8N</span>
+            <span className="text-[10px] text-muted-foreground">v1.0 · Clínicas</span>
           </div>
         )}
       </SidebarFooter>

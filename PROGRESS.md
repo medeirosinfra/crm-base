@@ -70,7 +70,8 @@ CRM SaaS **white-label multi-tenant** para clínicas: 1 código, N clínicas, ca
 
 - [ ] Dashboard com KPIs reais (MRR, churn) a partir do banco
 - [ ] Relatórios (vendas, fechamento, top produtos) com dados reais
-- [ ] Financeiro (caixa, recebimentos, despesas) real
+- [x] Financeiro (caixa, recebimentos, despesas) — ✅ implementado (02/08)
+- [x] Contatos & Leads — ✅ implementado (02/08)
 - [ ] PDV real
 - [ ] Automações n8n integradas
 - [ ] Testes automatizados (Vitest)
