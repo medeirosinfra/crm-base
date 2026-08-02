@@ -29,30 +29,42 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/lib/auth-context";
+import { temPermissao, type Modulo } from "@/lib/permissions";
 
-const primaryNav = [
-  { title: "Visão Geral SaaS", url: "/", icon: LayoutDashboard },
-  { title: "Gestão de Clínicas (CRM)", url: "/clinicas", icon: Stethoscope },
-  { title: "Agenda & Agendamentos", url: "/agenda", icon: CalendarDays },
-  { title: "Pacientes", url: "/pacientes", icon: Users },
-  { title: "Contatos & Leads", url: "/contatos", icon: Users2 },
-  { title: "Procedimentos & Tratamentos", url: "/procedimentos", icon: Scissors },
-  { title: "Campanhas", url: "/campanhas", icon: Megaphone },
-  { title: "Disparador Multicanal", url: "/disparador", icon: MessageSquareMore },
-  { title: "Financeiro", url: "/financeiro", icon: Wallet },
+interface NavItem {
+  title: string;
+  url: string;
+  icon: typeof LayoutDashboard;
+  modulo: Modulo;
+}
+
+const primaryNav: NavItem[] = [
+  { title: "Visão Geral SaaS", url: "/", icon: LayoutDashboard, modulo: "dashboard" },
+  { title: "Gestão de Clínicas (CRM)", url: "/clinicas", icon: Stethoscope, modulo: "clinicas" },
+  { title: "Agenda & Agendamentos", url: "/agenda", icon: CalendarDays, modulo: "agenda" },
+  { title: "Pacientes", url: "/pacientes", icon: Users, modulo: "pacientes" },
+  { title: "Contatos & Leads", url: "/contatos", icon: Users2, modulo: "contatos" },
+  { title: "Procedimentos & Tratamentos", url: "/procedimentos", icon: Scissors, modulo: "procedimentos" },
+  { title: "Campanhas", url: "/campanhas", icon: Megaphone, modulo: "campanhas" },
+  { title: "Disparador Multicanal", url: "/disparador", icon: MessageSquareMore, modulo: "disparador" },
+  { title: "Financeiro", url: "/financeiro", icon: Wallet, modulo: "financeiro" },
 ];
 
-const configNav = [
-  { title: "White-Label (Branding)", url: "/white-label", icon: Palette },
-  { title: "Automações & IA", url: "/automacoes", icon: Bot },
-  { title: "Relatórios", url: "/relatorios", icon: BarChart3 },
+const configNav: NavItem[] = [
+  { title: "White-Label (Branding)", url: "/white-label", icon: Palette, modulo: "white_label" },
+  { title: "Automações & IA", url: "/automacoes", icon: Bot, modulo: "automacoes" },
+  { title: "Relatórios", url: "/relatorios", icon: BarChart3, modulo: "relatorios" },
 ];
 
 export function AppSidebar() {
   const { state } = useSidebar();
   const navigate = useNavigate();
-  const { signOut, user } = useAuth();
+  const { signOut, user, cargo } = useAuth();
   const collapsed = state === "collapsed";
+
+  // Filtra a navegação conforme o cargo do usuário
+  const primaryVisible = primaryNav.filter((item) => temPermissao(cargo, item.modulo));
+  const configVisible = configNav.filter((item) => temPermissao(cargo, item.modulo));
   const pathname = useRouterState({ select: (r) => r.location.pathname });
   const isActive = (url: string) => (url === "/" ? pathname === "/" : pathname.startsWith(url));
 
@@ -90,7 +102,7 @@ export function AppSidebar() {
           )}
           <SidebarGroupContent>
             <SidebarMenu>
-              {primaryNav.map((item) => (
+              {primaryVisible.map((item) => (
                 <SidebarMenuItem key={item.url}>
                   <SidebarMenuButton
                     asChild
@@ -117,7 +129,7 @@ export function AppSidebar() {
           )}
           <SidebarGroupContent>
             <SidebarMenu>
-              {configNav.map((item) => (
+              {configVisible.map((item) => (
                 <SidebarMenuItem key={item.url}>
                   <SidebarMenuButton
                     asChild

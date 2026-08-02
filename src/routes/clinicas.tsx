@@ -11,6 +11,7 @@ import { useState, type FormEvent } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { AppShell } from "@/components/app-shell";
 import { RequireAuth } from "@/components/require-auth";
+import { RequireRole } from "@/components/require-role";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -50,7 +51,9 @@ export const Route = createFileRoute("/clinicas")({
   }),
   component: () => (
     <RequireAuth>
-      <ClinicasPage />
+      <RequireRole modulo="clinicas">
+        <ClinicasPage />
+      </RequireRole>
     </RequireAuth>
   ),
 });
