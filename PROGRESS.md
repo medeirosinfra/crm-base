@@ -1,7 +1,17 @@
 # 📊 PROGRESS — CRM Base White-Label (produtos/crm-base)
 
 > **Documentação viva** — atualizar sempre que houver avanço. Base para saber onde estamos e o que fazer.
-> Última atualização: 2026-08-03
+> Última atualização: 2026-08-04
+
+---
+
+## 🔄 COMO RETOMAR (ler ao voltar)
+
+1. **Ler este PROGRESS.md** — estado exato do que está pronto
+2. **Ler ESTRATEGIA.md** — visão de negócio e decisões
+3. **Verificar servidor**: `docker ps` (container medeirosinfra-suite deve estar Up)
+4. **Continuar do item "PRÓXIMOS PASSOS"** abaixo
+5. Atualizar docs ao final da sessão
 
 ---
 
@@ -51,22 +61,42 @@ CRM SaaS **white-label multi-tenant** para clínicas: 1 código, N clínicas, ca
 - `src/routes/anamnese.tsx` — ficha de avaliação facial (histórico de saúde, avaliação facial, avaliador)
 - Sidebar + permissões: módulo `anamnese` para todos os cargos (exceto financeiro)
 
-## 🚧 Próximos (roadmap)
+## 🚧 PRÓXIMOS PASSOS (continuar daqui)
 
 | # | Item | Status |
 |---|---|---|
-| 1 | Empty states padronizados (componente `EmptyState`) | ✅ criado |
-| 2 | Anamnese + Prontuário | ✅ migration 007 + página /anamnese |
-| 3 | **PLATAFORMA 2 CAMADAS** | ✅ Master (/master) + Clínica (raiz) |
-| 4 | **Menus dinâmicos por segmento** | ✅ segmento_modulos |
-| 5 | **Admin automático ao criar clínica** | ✅ createClinicWithAdmin |
-| 6 | **Funcionários e Setores** | ✅ /funcionarios + /setores |
-| 7 | Financeiro detalhado (DRE completo) | ⏳ |
-| 8 | Campanhas com disparo real | ⏳ |
-| 9 | Automações (N8N/IA) + bots + anúncios | ⏳ |
-| 10 | Subdomínio por clínica (DNS wildcard) | ⏳ |
-| 11 | Testes automatizados (Vitest) | ⏳ |
-| 12 | Screenshots no README do GitHub | ⏳ |
+| 1 | **PUBLICAR bot integrado no GitHub** | ⏳ AGUARDANDO DONO — código testado, falta push |
+| 2 | Criar bot específico de botox/preenchimento (keyword + resposta) | ⏳ testar resposta real |
+| 3 | Bot por clínica (cada clínica seu bot) | ⏳ |
+| 4 | Financeiro detalhado (DRE completo) | ⏳ |
+| 5 | Campanhas com disparo real (fila + relatório) | ⏳ |
+| 6 | Anúncios com integração real (redes sociais) | ⏳ estado local hoje |
+| 7 | Subdomínio por clínica (DNS wildcard) | ⏳ |
+| 8 | Testes automatizados (Vitest) | ⏳ |
+| 9 | Screenshots no README do GitHub | ⏳ |
+
+## ✅ Feito até agora (04/08)
+
+### Bot integrado ao WhatsApp (NÃO publicado ainda)
+- **Webhook `/webhook/waha`** no `src/server.ts` (intercepta POST antes do router)
+- WAHA aponta para `https://crm.medeirossolucoestech.com.br/webhook/waha`
+- Fluxo: WhatsApp → WAHA → nosso webhook → consulta bots → responde via WAHA
+- **Testado**: `{"responded":true,"bot":"Atendente Master"}`
+- Tabela `bots` (migration 010) + service `bots.ts`
+- Página `/master/bots` para criar bots (keyword + resposta)
+- ⚠️ **NÃO fez push no GitHub** — aguardando autorização do dono
+
+### Ferramentas do Master (04/08)
+- `/master/disparos`: envio WhatsApp em massa (WAHA) para contatos de todas as clínicas
+- `/master/anuncios`: CRUD de anúncios redes sociais (estado local)
+- `/master/bots`: configuração de bots (estado local + integrado via webhook)
+- `/master/segmentos`: configure quais módulos cada segmento mostra (via UI)
+
+### Plataforma 2 Camadas (04/08)
+- Painel Master (`/master`) + Painel da Clínica (raiz)
+- Menus dinâmicos por segmento (`segmento_modulos`)
+- Admin automático ao criar clínica (server function `createClinicWithAdmin`)
+- Funcionários (`/funcionarios`) e Setores (`/setores`)
 
 ## 📋 Padrões de código
 
