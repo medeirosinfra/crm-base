@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SetoresRouteImport } from './routes/setores'
 import { Route as RelatoriosRouteImport } from './routes/relatorios'
 import { Route as ProcedimentosRouteImport } from './routes/procedimentos'
+import { Route as ParcelasRouteImport } from './routes/parcelas'
 import { Route as PacientesRouteImport } from './routes/pacientes'
 import { Route as MasterRouteImport } from './routes/master'
 import { Route as LoginRouteImport } from './routes/login'
@@ -46,6 +47,11 @@ const RelatoriosRoute = RelatoriosRouteImport.update({
 const ProcedimentosRoute = ProcedimentosRouteImport.update({
   id: '/procedimentos',
   path: '/procedimentos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ParcelasRoute = ParcelasRouteImport.update({
+  id: '/parcelas',
+  path: '/parcelas',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PacientesRoute = PacientesRouteImport.update({
@@ -161,6 +167,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/master': typeof MasterRouteWithChildren
   '/pacientes': typeof PacientesRouteWithChildren
+  '/parcelas': typeof ParcelasRoute
   '/procedimentos': typeof ProcedimentosRoute
   '/relatorios': typeof RelatoriosRoute
   '/setores': typeof SetoresRoute
@@ -185,6 +192,7 @@ export interface FileRoutesByTo {
   '/funcionarios': typeof FuncionariosRoute
   '/login': typeof LoginRoute
   '/pacientes': typeof PacientesRouteWithChildren
+  '/parcelas': typeof ParcelasRoute
   '/procedimentos': typeof ProcedimentosRoute
   '/relatorios': typeof RelatoriosRoute
   '/setores': typeof SetoresRoute
@@ -211,6 +219,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/master': typeof MasterRouteWithChildren
   '/pacientes': typeof PacientesRouteWithChildren
+  '/parcelas': typeof ParcelasRoute
   '/procedimentos': typeof ProcedimentosRoute
   '/relatorios': typeof RelatoriosRoute
   '/setores': typeof SetoresRoute
@@ -238,6 +247,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/master'
     | '/pacientes'
+    | '/parcelas'
     | '/procedimentos'
     | '/relatorios'
     | '/setores'
@@ -262,6 +272,7 @@ export interface FileRouteTypes {
     | '/funcionarios'
     | '/login'
     | '/pacientes'
+    | '/parcelas'
     | '/procedimentos'
     | '/relatorios'
     | '/setores'
@@ -287,6 +298,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/master'
     | '/pacientes'
+    | '/parcelas'
     | '/procedimentos'
     | '/relatorios'
     | '/setores'
@@ -313,6 +325,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   MasterRoute: typeof MasterRouteWithChildren
   PacientesRoute: typeof PacientesRouteWithChildren
+  ParcelasRoute: typeof ParcelasRoute
   ProcedimentosRoute: typeof ProcedimentosRoute
   RelatoriosRoute: typeof RelatoriosRoute
   SetoresRoute: typeof SetoresRoute
@@ -339,6 +352,13 @@ declare module '@tanstack/react-router' {
       path: '/procedimentos'
       fullPath: '/procedimentos'
       preLoaderRoute: typeof ProcedimentosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/parcelas': {
+      id: '/parcelas'
+      path: '/parcelas'
+      fullPath: '/parcelas'
+      preLoaderRoute: typeof ParcelasRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/pacientes': {
@@ -533,6 +553,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   MasterRoute: MasterRouteWithChildren,
   PacientesRoute: PacientesRouteWithChildren,
+  ParcelasRoute: ParcelasRoute,
   ProcedimentosRoute: ProcedimentosRoute,
   RelatoriosRoute: RelatoriosRoute,
   SetoresRoute: SetoresRoute,
