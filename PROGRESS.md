@@ -116,10 +116,29 @@ CRM SaaS **white-label multi-tenant** para clínicas: 1 código, N clínicas, ca
 - **Configuração preservada**: 5 segmentos, 15 módulos, 57 segmento_modulos (menus por segmento)
 - **Próximo passo**: cadastrar os clientes reais via "+ Novo Cliente" (criação funcionando — rota `/api/clinicas`)
 
+### 🏥 1º CLIENTE REAL CADASTRADO — Clínica Luana ✅ (03/08)
+- **Clínica Luana** criada via `POST /api/clinicas` (form "+ Novo Cliente"): tenant + admin + funcionário raiz criados automaticamente
+- **Segmento**: Harmonização Facial · **Status**: ativa · **Plano**: pro
+- **Cor**: azul claro `#1d96e2` (tema white-label)
+- **Sessão WAHA**: `Clinica Dr Luana`
+- **Admin da clínica**: `medeirosinfra@gmail.com` (cargo admin) — login validado, cai no painel da clínica
+- Painel da dona mostra 12 módulos do segmento Harmonização Facial (Agenda, Anamnese, Procedimentos, Financeiro, etc.)
+
+### 🎨 Fix tema white-label — cor completa da clínica (03/08)
+- `1980e36`: **gradientes** (--gradient-primary) agora derivam da cor do tenant (antes fixo no master)
+- `394039f`: tema **reaplica ao trocar de sessão** (era bug de timing — usava getSession isolado, agora reage ao useAuth)
+- `7dbe70b`: **fundo/superfícies** (background, card, sidebar, muted, border) derivam do **matiz** da cor do tenant — painel azul para clínica azul, etc.
+- Antes só os ícones/primary mudavam; agora a identidade visual é completa
+
+### 🖥️ Painel de Clientes (Master) profissionalizado (03/08)
+- `a550677`: página `/master/clinicas` renomeada para **Clientes** + KPIs (total, ativos, trial, MRR) + guia "Como criar um cliente em 3 passos" + botão "+ Novo Cliente"
+- `f8b217a`: **Visão do Ecossistema** com CTA "+ Novo Cliente", cards de clínicas clicáveis, "Ver todas →"
+
 ### Infra/migrações
 - Descoberto: banco principal é `supabase` (tabelas completas). `crm_base` é órfão
 - 10 migrations já aplicadas; marcadas como `.applied` para `migrate.sh` parar de tentar reaplicar
 - Tem infra local de WestCam lista de 3110 revalidada (todos containers healthy)
+- **Documentação**: agora com **diário por data** em `docs/sessoes/` (um arquivo por sessão)
 
 ## ✅ Feito até agora (04/08)
 

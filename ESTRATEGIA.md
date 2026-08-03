@@ -1,15 +1,17 @@
 # 🎯 ESTRATÉGIA — CRM White-Label para Clínicas
 
 > **DOCUMENTO MESTRE** — Sempre ler quando retomarmos o trabalho.
-> Última atualização: 2026-08-04
+> Última atualização: 2026-08-03
 
 ## 🔄 RETOMADA (ler primeiro ao voltar)
 
 1. **Ler este ESTRATEGIA.md** — visão, decisões, roadmap
 2. **Ler PROGRESS.md** — estado exato do que está pronto
 3. **Verificar servidor**: `docker ps` (medeirosinfra-suite Up, waha WORKING, supabase healthy)
-4. ✅ Bot publicado no GitHub (03/08) — commit `7bc1533`; bot por clínica (`0aa8fc5`) e DRE (`25ceaca`) também publicados
-5. Continuar do "PRÓXIMOS PASSOS" no PROGRESS.md
+4. ✅ Bot publicado no GitHub (03/08) — commit `7bc1533`; bot por clínica (`0aa8fc5`), DRE (`25ceaca`), criação de clínica (`4c81dd4`), tema white-label (`7dbe70b`) publicados
+5. ✅ **1 cliente real ativo**: Clínica **Luana** (Harmonização Facial, cor azul) — cadastrada pelo Painel Master
+6. Continuar do "PRÓXIMOS PASSOS" no PROGRESS.md
+7. **Histórico por sessão**: ver `docs/sessoes/` (diário por data) para o registro do que foi feito
 
 ---
 
@@ -100,6 +102,10 @@ Criar uma **linha de produtos SaaS white-label** para revenda, cada um focado nu
   - **Bots de Atendimento** (`/master/bots`): configuração de bots (saudação, keyword, resposta, transferir humano)
   - **Segmentos & Módulos** (`/master/segmentos`): configure quais módulos cada segmento mostra (menus via UI)
 - ✅ **Dashboard com dados reais**, **Relatórios & BI**, **Agenda completa**, **Detalhe do Paciente**
+- ✅ **Painel de Clientes (Master) profissionalizado**: página renomeada para "Clientes", KPIs (total/ativos/trial/MRR), guia de uso, botão "+ Novo Cliente"
+- ✅ **Criação de clínica via rota `/api/clinicas`** (contorna server-fn do TanStack que falhava no Docker)
+- ✅ **Tema white-label completo**: cor do tenant aplicada em ícones, gradientes e fundo/superfícies (matiz derivado)
+- ✅ **1º cliente real cadastrado (Clínica Luana)** — segmento Harmonização Facial, cor azul, admin validado no painel da clínica
 
 ### Implementado recentemente (02/08):
 - ✅ **CRUD completo de Clínicas** — criar/editar/excluir com branding (cor, domínio, WAHA), segmento, status, plano (testado via API)
