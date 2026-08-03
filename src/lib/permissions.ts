@@ -24,6 +24,7 @@ export type Modulo =
   | "anamnese"
   | "contatos"
   | "procedimentos"
+  | "prontuario"
   | "campanhas"
   | "disparador"
   | "financeiro"
@@ -43,6 +44,7 @@ export const MODULO_LABELS: Record<Modulo, string> = {
   anamnese: "Anamnese & Avaliação",
   contatos: "Contatos & Leads",
   procedimentos: "Procedimentos",
+  prontuario: "Prontuário",
   campanhas: "Campanhas",
   disparador: "Disparador WhatsApp",
   financeiro: "Financeiro",
@@ -70,6 +72,7 @@ export const PERMISSOES: Record<Cargo, Modulo[]> = {
     "anamnese",
     "contatos",
     "procedimentos",
+    "prontuario",
     "campanhas",
     "disparador",
     "financeiro",
@@ -88,6 +91,7 @@ export const PERMISSOES: Record<Cargo, Modulo[]> = {
     "anamnese",
     "contatos",
     "procedimentos",
+    "prontuario",
     "campanhas",
     "disparador",
     "financeiro",
@@ -106,6 +110,7 @@ export const PERMISSOES: Record<Cargo, Modulo[]> = {
     "anamnese",
     "contatos",
     "procedimentos",
+    "prontuario",
     "campanhas",
     "disparador",
     "financeiro",
@@ -114,7 +119,7 @@ export const PERMISSOES: Record<Cargo, Modulo[]> = {
     "funcionarios",
   ],
   financeiro: ["dashboard", "financeiro", "relatorios", "pacientes", "parcelas"],
-  staff: ["dashboard", "agenda", "pacientes", "anamnese", "contatos", "disparador"],
+  staff: ["dashboard", "agenda", "pacientes", "anamnese", "contatos", "disparador", "prontuario"],
 };
 
 /** Verifica se um cargo tem acesso a um módulo */
@@ -132,6 +137,7 @@ export function moduloDaRota(pathname: string): Modulo | null {
     "/clinicas": "clinicas",
     "/agenda": "agenda",
     "/pacientes": "pacientes",
+    "/prontuario": "prontuario",
     "/contatos": "contatos",
     "/procedimentos": "procedimentos",
     "/campanhas": "campanhas",

@@ -31,9 +31,16 @@ export interface ProntuarioRegistro {
   tenant_id: string;
   paciente_id: string;
   agendamento_id: string | null;
-  tipo: string;
+  tipo: "avaliacao" | "evolucao" | "procedimento" | "retorno" | "medicacao";
   titulo: string | null;
   descricao: string | null;
+  data_registro: string | null;
+  procedimento_realizado: string | null;
+  medicacao: string | null;
+  receita: string | null;
+  periodo_inicio: string | null;
+  periodo_fim: string | null;
+  retorno_em: string | null;
   profissional_id: string | null;
   created_at: string;
 }
@@ -77,12 +84,13 @@ export async function upsertAnamnese(
   return data as Anamnese;
 }
 
-/** Lista registros do prontuário do paciente. */
+/** Lista registros do prontuário do paciente (mais recentes primeiro). */
 export async function listProntuario(pacienteId: string): Promise<ProntuarioRegistro[]> {
   const { data, error } = await supabase
     .from("prontuario_registros")
-    .select("*")
+    .select("*, profissional:profissionais(nome)")
     .eq("paciente_id", pacienteId)
+    .order("data_registro", { ascending: false })
     .order("created_at", { ascending: false });
 
   if (error) throw new Error(`Erro ao buscar prontuário: ${error.message}`);
@@ -101,4 +109,26 @@ export async function createProntuarioRegistro(
 
   if (error) throw new Error(`Erro ao criar registro: ${error.message}`);
   return data as ProntuarioRegistro;
+}
+
+/** Atualiza um registro do prontuário. */
+export async function updateProntuarioRegistro(
+  id: string,
+  input: Partial<ProntuarioRegistro>,
+): Promise<ProntuarioRegistro> {
+  const { data, error } = await supabase
+    .from("prontuario_registros")
+    .update(input)
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error) throw new Error(`Erro ao atualizar registro: ${error.message}`);
+  return data as ProntuarioRegistro;
+}
+
+/** Exclui um registro do prontuário. */
+export async function deleteProntuarioRegistro(id: string): Promise<void> {
+  const { error } = await supabase.from("prontuario_registros").delete().eq("id", id);
+  if (error) throw new Error(`Erro ao excluir registro: ${error.message}`);
 }

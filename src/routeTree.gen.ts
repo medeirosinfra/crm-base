@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as WhatsappRouteImport } from './routes/whatsapp'
 import { Route as SetoresRouteImport } from './routes/setores'
 import { Route as RelatoriosRouteImport } from './routes/relatorios'
+import { Route as ProntuarioRouteImport } from './routes/prontuario'
 import { Route as ProcedimentosRouteImport } from './routes/procedimentos'
 import { Route as ParcelasRouteImport } from './routes/parcelas'
 import { Route as PacientesRouteImport } from './routes/pacientes'
@@ -48,6 +49,11 @@ const SetoresRoute = SetoresRouteImport.update({
 const RelatoriosRoute = RelatoriosRouteImport.update({
   id: '/relatorios',
   path: '/relatorios',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProntuarioRoute = ProntuarioRouteImport.update({
+  id: '/prontuario',
+  path: '/prontuario',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProcedimentosRoute = ProcedimentosRouteImport.update({
@@ -175,6 +181,7 @@ export interface FileRoutesByFullPath {
   '/pacientes': typeof PacientesRouteWithChildren
   '/parcelas': typeof ParcelasRoute
   '/procedimentos': typeof ProcedimentosRoute
+  '/prontuario': typeof ProntuarioRoute
   '/relatorios': typeof RelatoriosRoute
   '/setores': typeof SetoresRoute
   '/whatsapp': typeof WhatsappRoute
@@ -201,6 +208,7 @@ export interface FileRoutesByTo {
   '/pacientes': typeof PacientesRouteWithChildren
   '/parcelas': typeof ParcelasRoute
   '/procedimentos': typeof ProcedimentosRoute
+  '/prontuario': typeof ProntuarioRoute
   '/relatorios': typeof RelatoriosRoute
   '/setores': typeof SetoresRoute
   '/whatsapp': typeof WhatsappRoute
@@ -229,6 +237,7 @@ export interface FileRoutesById {
   '/pacientes': typeof PacientesRouteWithChildren
   '/parcelas': typeof ParcelasRoute
   '/procedimentos': typeof ProcedimentosRoute
+  '/prontuario': typeof ProntuarioRoute
   '/relatorios': typeof RelatoriosRoute
   '/setores': typeof SetoresRoute
   '/whatsapp': typeof WhatsappRoute
@@ -258,6 +267,7 @@ export interface FileRouteTypes {
     | '/pacientes'
     | '/parcelas'
     | '/procedimentos'
+    | '/prontuario'
     | '/relatorios'
     | '/setores'
     | '/whatsapp'
@@ -284,6 +294,7 @@ export interface FileRouteTypes {
     | '/pacientes'
     | '/parcelas'
     | '/procedimentos'
+    | '/prontuario'
     | '/relatorios'
     | '/setores'
     | '/whatsapp'
@@ -311,6 +322,7 @@ export interface FileRouteTypes {
     | '/pacientes'
     | '/parcelas'
     | '/procedimentos'
+    | '/prontuario'
     | '/relatorios'
     | '/setores'
     | '/whatsapp'
@@ -339,6 +351,7 @@ export interface RootRouteChildren {
   PacientesRoute: typeof PacientesRouteWithChildren
   ParcelasRoute: typeof ParcelasRoute
   ProcedimentosRoute: typeof ProcedimentosRoute
+  ProntuarioRoute: typeof ProntuarioRoute
   RelatoriosRoute: typeof RelatoriosRoute
   SetoresRoute: typeof SetoresRoute
   WhatsappRoute: typeof WhatsappRoute
@@ -365,6 +378,13 @@ declare module '@tanstack/react-router' {
       path: '/relatorios'
       fullPath: '/relatorios'
       preLoaderRoute: typeof RelatoriosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/prontuario': {
+      id: '/prontuario'
+      path: '/prontuario'
+      fullPath: '/prontuario'
+      preLoaderRoute: typeof ProntuarioRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/procedimentos': {
@@ -575,6 +595,7 @@ const rootRouteChildren: RootRouteChildren = {
   PacientesRoute: PacientesRouteWithChildren,
   ParcelasRoute: ParcelasRoute,
   ProcedimentosRoute: ProcedimentosRoute,
+  ProntuarioRoute: ProntuarioRoute,
   RelatoriosRoute: RelatoriosRoute,
   SetoresRoute: SetoresRoute,
   WhatsappRoute: WhatsappRoute,
