@@ -147,6 +147,14 @@ CRM SaaS **white-label multi-tenant** para clínicas: 1 código, N clínicas, ca
 - Testado via API: paciente com todos os campos criado ✓
 - ⚠️ **Nota**: após nova migration, reiniciar `supabase-rest` para recarregar schema do PostgREST
 
+### 💳 MÓDULO DE PARCELAS / PLANO DE PAGAMENTO (03/08) — `6ef7ed8`
+- **Migration 012**: tabelas `planos_pagamento` + `parcelas` (suporte a pagamento **parcial**: pago/parcial/restante)
+- **Service** `pagamentos.ts`: criar plano (total + entrada + nº parcelas → gera vencimentos mensais automáticos), registrar pagamento (parcial/total, lança receita no financeiro), cancelar plano
+- **Página `/parcelas`**: KPIs (total, recebido, a receber), lista de planos com tabela de parcelas, criar plano, botão "Receber" (parcial)
+- **Módulo** `parcelas` no banco, nos 5 segmentos, e nas permissões
+- **Testado**: plano 2200 em 6x → parcelas de 350 mensais (16/08 → 16/01); pagamento parcial (100 de 350 → "parcial") e total (→ "pago")
+- Exemplo da Dra. Luana suportado: parcelas com datas, marcação PG, e pagamento parcial (266,66 pago com 100,00 restante)
+
 ### Infra/migrações
 - Descoberto: banco principal é `supabase` (tabelas completas). `crm_base` é órfão
 - 10 migrations já aplicadas; marcadas como `.applied` para `migrate.sh` parar de tentar reaplicar
