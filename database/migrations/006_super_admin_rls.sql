@@ -6,10 +6,14 @@
 -- ============================================================
 
 -- Helper: o usuário é super_admin?
+-- SECURITY DEFINER evita recursão (a política de profiles chama esta função,
+-- e esta função consulta profiles — sem security definer causa stack depth).
 CREATE OR REPLACE FUNCTION is_super_admin()
 RETURNS boolean
 LANGUAGE sql
 STABLE
+SECURITY DEFINER
+SET search_path = public
 AS $$
   SELECT EXISTS (
     SELECT 1 FROM profiles
