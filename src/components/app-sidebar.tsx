@@ -14,6 +14,7 @@ import {
   LogOut,
   Scissors,
   Megaphone,
+  ClipboardList,
 } from "lucide-react";
 import {
   Sidebar,
@@ -43,6 +44,7 @@ const primaryNav: NavItem[] = [
   { title: "Gestão de Clínicas (CRM)", url: "/clinicas", icon: Stethoscope, modulo: "clinicas" },
   { title: "Agenda & Agendamentos", url: "/agenda", icon: CalendarDays, modulo: "agenda" },
   { title: "Pacientes", url: "/pacientes", icon: Users, modulo: "pacientes" },
+  { title: "Anamnese & Avaliação", url: "/anamnese", icon: ClipboardList, modulo: "anamnese" },
   { title: "Contatos & Leads", url: "/contatos", icon: Users2, modulo: "contatos" },
   { title: "Procedimentos & Tratamentos", url: "/procedimentos", icon: Scissors, modulo: "procedimentos" },
   { title: "Campanhas", url: "/campanhas", icon: Megaphone, modulo: "campanhas" },

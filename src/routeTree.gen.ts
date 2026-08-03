@@ -20,6 +20,7 @@ import { Route as ContatosRouteImport } from './routes/contatos'
 import { Route as ClinicasRouteImport } from './routes/clinicas'
 import { Route as CampanhasRouteImport } from './routes/campanhas'
 import { Route as AutomacoesRouteImport } from './routes/automacoes'
+import { Route as AnamneseRouteImport } from './routes/anamnese'
 import { Route as AgendaRouteImport } from './routes/agenda'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PacientesIdRouteImport } from './routes/pacientes.$id'
@@ -79,6 +80,11 @@ const AutomacoesRoute = AutomacoesRouteImport.update({
   path: '/automacoes',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AnamneseRoute = AnamneseRouteImport.update({
+  id: '/anamnese',
+  path: '/anamnese',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AgendaRoute = AgendaRouteImport.update({
   id: '/agenda',
   path: '/agenda',
@@ -98,6 +104,7 @@ const PacientesIdRoute = PacientesIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/agenda': typeof AgendaRoute
+  '/anamnese': typeof AnamneseRoute
   '/automacoes': typeof AutomacoesRoute
   '/campanhas': typeof CampanhasRoute
   '/clinicas': typeof ClinicasRoute
@@ -114,6 +121,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/agenda': typeof AgendaRoute
+  '/anamnese': typeof AnamneseRoute
   '/automacoes': typeof AutomacoesRoute
   '/campanhas': typeof CampanhasRoute
   '/clinicas': typeof ClinicasRoute
@@ -131,6 +139,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/agenda': typeof AgendaRoute
+  '/anamnese': typeof AnamneseRoute
   '/automacoes': typeof AutomacoesRoute
   '/campanhas': typeof CampanhasRoute
   '/clinicas': typeof ClinicasRoute
@@ -149,6 +158,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/agenda'
+    | '/anamnese'
     | '/automacoes'
     | '/campanhas'
     | '/clinicas'
@@ -165,6 +175,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/agenda'
+    | '/anamnese'
     | '/automacoes'
     | '/campanhas'
     | '/clinicas'
@@ -181,6 +192,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/agenda'
+    | '/anamnese'
     | '/automacoes'
     | '/campanhas'
     | '/clinicas'
@@ -198,6 +210,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AgendaRoute: typeof AgendaRoute
+  AnamneseRoute: typeof AnamneseRoute
   AutomacoesRoute: typeof AutomacoesRoute
   CampanhasRoute: typeof CampanhasRoute
   ClinicasRoute: typeof ClinicasRoute
@@ -290,6 +303,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AutomacoesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/anamnese': {
+      id: '/anamnese'
+      path: '/anamnese'
+      fullPath: '/anamnese'
+      preLoaderRoute: typeof AnamneseRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/agenda': {
       id: '/agenda'
       path: '/agenda'
@@ -329,6 +349,7 @@ const PacientesRouteWithChildren = PacientesRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AgendaRoute: AgendaRoute,
+  AnamneseRoute: AnamneseRoute,
   AutomacoesRoute: AutomacoesRoute,
   CampanhasRoute: CampanhasRoute,
   ClinicasRoute: ClinicasRoute,

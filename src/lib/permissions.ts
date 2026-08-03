@@ -21,6 +21,7 @@ export type Modulo =
   | "clinicas"
   | "agenda"
   | "pacientes"
+  | "anamnese"
   | "contatos"
   | "procedimentos"
   | "campanhas"
@@ -35,6 +36,7 @@ export const MODULO_LABELS: Record<Modulo, string> = {
   clinicas: "Gestão de Clínicas",
   agenda: "Agenda",
   pacientes: "Pacientes",
+  anamnese: "Anamnese & Avaliação",
   contatos: "Contatos & Leads",
   procedimentos: "Procedimentos",
   campanhas: "Campanhas",
@@ -57,6 +59,7 @@ export const PERMISSOES: Record<Cargo, Modulo[]> = {
     "clinicas",
     "agenda",
     "pacientes",
+    "anamnese",
     "contatos",
     "procedimentos",
     "campanhas",
@@ -70,6 +73,7 @@ export const PERMISSOES: Record<Cargo, Modulo[]> = {
     "dashboard",
     "agenda",
     "pacientes",
+    "anamnese",
     "contatos",
     "procedimentos",
     "campanhas",
@@ -83,6 +87,7 @@ export const PERMISSOES: Record<Cargo, Modulo[]> = {
     "dashboard",
     "agenda",
     "pacientes",
+    "anamnese",
     "contatos",
     "procedimentos",
     "campanhas",
@@ -91,7 +96,7 @@ export const PERMISSOES: Record<Cargo, Modulo[]> = {
     "relatorios",
   ],
   financeiro: ["dashboard", "financeiro", "relatorios", "pacientes"],
-  staff: ["dashboard", "agenda", "pacientes", "contatos", "disparador"],
+  staff: ["dashboard", "agenda", "pacientes", "anamnese", "contatos", "disparador"],
 };
 
 /** Verifica se um cargo tem acesso a um módulo */
