@@ -17,6 +17,7 @@ let serverEntryPromise: Promise<ServerEntry> | undefined;
 import { supabaseAdmin } from "./lib/supabase/server";
 import { sendWhatsAppText } from "./lib/waha";
 import { criarClinica } from "./server-functions/api-clinicas";
+import { iniciarConexaoWhatsapp, statusConexaoWhatsapp, desconectarWhatsapp, setConexaoTenant, nomeSessaoClinica } from "./lib/supabase/whatsapp-connect";
 
 interface WahaPayload {
   from?: string;
@@ -151,6 +152,51 @@ async function handleCreateClinica(request: Request): Promise<Response> {
   }
 }
 
+// ============================================================
+// WhatsApp da Clínica — POST/GET /api/whatsapp/...
+// Conexão por QR: criar/iniciar sessão WAHA da clínica, obter QR,
+// checar status. Roda no servidor (não expõe API key do WAHA).
+// ============================================================
+async function handleWhatsappRoute(request: Request): Promise<Response> {
+  const url = new URL(request.url);
+  const path = url.pathname; // ex: /api/whatsapp/conectar, /api/whatsapp/status
+
+  try {
+    // /api/whatsapp/conectar?tenant=&slug=  (cria sessão e retorna QR)
+    if (request.method === "POST" && path === "/api/whatsapp/conectar") {
+      const body = (await request.json().catch(() => ({}))) as { slug?: string; tenantId?: string };
+      if (!body.slug || !body.tenantId) {
+        return new Response(JSON.stringify({ erro: "slug e tenantId obrigatórios" }), { status: 400, headers: { "content-type": "application/json" } });
+      }
+      const result = await iniciarConexaoWhatsapp(body.slug);
+      if (result.ok && result.status === "WORKING") {
+        await setConexaoTenant(body.tenantId, true);
+      }
+      return new Response(JSON.stringify(result), { status: result.ok ? 200 : 502, headers: { "content-type": "application/json" } });
+    }
+
+    // /api/whatsapp/status?slug=X
+    if (request.method === "GET" && path === "/api/whatsapp/status") {
+      const slug = url.searchParams.get("slug") ?? "";
+      const tenantId = url.searchParams.get("tenantId") ?? "";
+      const result = await statusConexaoWhatsapp(slug);
+      return new Response(JSON.stringify(result), { status: 200, headers: { "content-type": "application/json" } });
+    }
+
+    // /api/whatsapp/desconectar
+    if (request.method === "POST" && path === "/api/whatsapp/desconectar") {
+      const body = (await request.json().catch(() => ({}))) as { slug?: string; tenantId?: string };
+      if (body.slug) await desconectarWhatsapp(body.slug);
+      if (body.tenantId) await setConexaoTenant(body.tenantId, false);
+      return new Response(JSON.stringify({ ok: true }), { status: 200, headers: { "content-type": "application/json" } });
+    }
+
+    return new Response(JSON.stringify({ erro: "rota não encontrada" }), { status: 404, headers: { "content-type": "application/json" } });
+  } catch (e) {
+    return new Response(JSON.stringify({ erro: String((e as Error).message ?? e) }), { status: 500, headers: { "content-type": "application/json" } });
+  }
+}
+
 async function getServerEntry(): Promise<ServerEntry> {
   if (!serverEntryPromise) {
     serverEntryPromise = import("@tanstack/react-start/server-entry").then(
@@ -196,6 +242,11 @@ export default {
     // Criar clínica — rota customizada (contorna server-fn)
     if (request.method === "POST" && new URL(request.url).pathname === "/api/clinicas") {
       return handleCreateClinica(request);
+    }
+
+    // WhatsApp da clínica — conexão por QR
+    if (new URL(request.url).pathname.startsWith("/api/whatsapp/")) {
+      return handleWhatsappRoute(request);
     }
 
     try {
