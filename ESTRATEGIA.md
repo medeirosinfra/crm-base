@@ -80,6 +80,11 @@ Criar uma **linha de produtos SaaS white-label** para revenda, cada um focado nu
   - **Funcionários** (`/funcionarios`) e **Setores** (`/setores`): admin da clínica gerencia equipe
 - ✅ **Roles & Permissões (RBAC)** — matriz de cargos × módulos
 - ✅ **Sistema de Harmonização Facial** (migration 007): 15 procedimentos, 4 profissionais, anamnese + prontuário
+- ✅ **FERRAMENTAS DO MASTER** (04/08):
+  - **Disparos em Massa** (`/master/disparos`): envio de WhatsApp em massa para contatos de todas as clínicas (WAHA)
+  - **Anúncios** (`/master/anuncios`): CRUD de anúncios para redes sociais com agendamento
+  - **Bots de Atendimento** (`/master/bots`): configuração de bots (saudação, keyword, resposta, transferir humano)
+  - **Segmentos & Módulos** (`/master/segmentos`): configure quais módulos cada segmento mostra (menus via UI)
 - ✅ **Dashboard com dados reais**, **Relatórios & BI**, **Agenda completa**, **Detalhe do Paciente**
 
 ### Implementado recentemente (02/08):
