@@ -8,6 +8,9 @@ import {
   LogOut,
   Settings,
   Building2,
+  Send,
+  Megaphone,
+  MessageSquareMore,
 } from "lucide-react";
 import {
   Sidebar,
@@ -31,8 +34,11 @@ const masterNav = [
 ];
 
 const ferramentasNav = [
-  { titulo: "White-Label", url: "/master/white-label", icon: Palette },
+  { titulo: "Disparos em Massa", url: "/master/disparos", icon: Send },
+  { titulo: "Anúncios", url: "/master/anuncios", icon: Megaphone },
+  { titulo: "Bots de Atendimento", url: "/master/bots", icon: MessageSquareMore },
   { titulo: "Automações & IA", url: "/master/automacoes", icon: Bot },
+  { titulo: "White-Label", url: "/master/white-label", icon: Palette },
 ];
 
 export function MasterSidebar() {

@@ -26,8 +26,12 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as MasterIndexRouteImport } from './routes/master/index'
 import { Route as PacientesIdRouteImport } from './routes/pacientes.$id'
 import { Route as MasterWhiteLabelRouteImport } from './routes/master/white-label'
+import { Route as MasterSegmentosRouteImport } from './routes/master/segmentos'
+import { Route as MasterDisparosRouteImport } from './routes/master/disparos'
 import { Route as MasterClinicasRouteImport } from './routes/master/clinicas'
+import { Route as MasterBotsRouteImport } from './routes/master/bots'
 import { Route as MasterAutomacoesRouteImport } from './routes/master/automacoes'
+import { Route as MasterAnunciosRouteImport } from './routes/master/anuncios'
 
 const SetoresRoute = SetoresRouteImport.update({
   id: '/setores',
@@ -114,14 +118,34 @@ const MasterWhiteLabelRoute = MasterWhiteLabelRouteImport.update({
   path: '/white-label',
   getParentRoute: () => MasterRoute,
 } as any)
+const MasterSegmentosRoute = MasterSegmentosRouteImport.update({
+  id: '/segmentos',
+  path: '/segmentos',
+  getParentRoute: () => MasterRoute,
+} as any)
+const MasterDisparosRoute = MasterDisparosRouteImport.update({
+  id: '/disparos',
+  path: '/disparos',
+  getParentRoute: () => MasterRoute,
+} as any)
 const MasterClinicasRoute = MasterClinicasRouteImport.update({
   id: '/clinicas',
   path: '/clinicas',
   getParentRoute: () => MasterRoute,
 } as any)
+const MasterBotsRoute = MasterBotsRouteImport.update({
+  id: '/bots',
+  path: '/bots',
+  getParentRoute: () => MasterRoute,
+} as any)
 const MasterAutomacoesRoute = MasterAutomacoesRouteImport.update({
   id: '/automacoes',
   path: '/automacoes',
+  getParentRoute: () => MasterRoute,
+} as any)
+const MasterAnunciosRoute = MasterAnunciosRouteImport.update({
+  id: '/anuncios',
+  path: '/anuncios',
   getParentRoute: () => MasterRoute,
 } as any)
 
@@ -140,8 +164,12 @@ export interface FileRoutesByFullPath {
   '/procedimentos': typeof ProcedimentosRoute
   '/relatorios': typeof RelatoriosRoute
   '/setores': typeof SetoresRoute
+  '/master/anuncios': typeof MasterAnunciosRoute
   '/master/automacoes': typeof MasterAutomacoesRoute
+  '/master/bots': typeof MasterBotsRoute
   '/master/clinicas': typeof MasterClinicasRoute
+  '/master/disparos': typeof MasterDisparosRoute
+  '/master/segmentos': typeof MasterSegmentosRoute
   '/master/white-label': typeof MasterWhiteLabelRoute
   '/pacientes/$id': typeof PacientesIdRoute
   '/master/': typeof MasterIndexRoute
@@ -160,8 +188,12 @@ export interface FileRoutesByTo {
   '/procedimentos': typeof ProcedimentosRoute
   '/relatorios': typeof RelatoriosRoute
   '/setores': typeof SetoresRoute
+  '/master/anuncios': typeof MasterAnunciosRoute
   '/master/automacoes': typeof MasterAutomacoesRoute
+  '/master/bots': typeof MasterBotsRoute
   '/master/clinicas': typeof MasterClinicasRoute
+  '/master/disparos': typeof MasterDisparosRoute
+  '/master/segmentos': typeof MasterSegmentosRoute
   '/master/white-label': typeof MasterWhiteLabelRoute
   '/pacientes/$id': typeof PacientesIdRoute
   '/master': typeof MasterIndexRoute
@@ -182,8 +214,12 @@ export interface FileRoutesById {
   '/procedimentos': typeof ProcedimentosRoute
   '/relatorios': typeof RelatoriosRoute
   '/setores': typeof SetoresRoute
+  '/master/anuncios': typeof MasterAnunciosRoute
   '/master/automacoes': typeof MasterAutomacoesRoute
+  '/master/bots': typeof MasterBotsRoute
   '/master/clinicas': typeof MasterClinicasRoute
+  '/master/disparos': typeof MasterDisparosRoute
+  '/master/segmentos': typeof MasterSegmentosRoute
   '/master/white-label': typeof MasterWhiteLabelRoute
   '/pacientes/$id': typeof PacientesIdRoute
   '/master/': typeof MasterIndexRoute
@@ -205,8 +241,12 @@ export interface FileRouteTypes {
     | '/procedimentos'
     | '/relatorios'
     | '/setores'
+    | '/master/anuncios'
     | '/master/automacoes'
+    | '/master/bots'
     | '/master/clinicas'
+    | '/master/disparos'
+    | '/master/segmentos'
     | '/master/white-label'
     | '/pacientes/$id'
     | '/master/'
@@ -225,8 +265,12 @@ export interface FileRouteTypes {
     | '/procedimentos'
     | '/relatorios'
     | '/setores'
+    | '/master/anuncios'
     | '/master/automacoes'
+    | '/master/bots'
     | '/master/clinicas'
+    | '/master/disparos'
+    | '/master/segmentos'
     | '/master/white-label'
     | '/pacientes/$id'
     | '/master'
@@ -246,8 +290,12 @@ export interface FileRouteTypes {
     | '/procedimentos'
     | '/relatorios'
     | '/setores'
+    | '/master/anuncios'
     | '/master/automacoes'
+    | '/master/bots'
     | '/master/clinicas'
+    | '/master/disparos'
+    | '/master/segmentos'
     | '/master/white-label'
     | '/pacientes/$id'
     | '/master/'
@@ -391,11 +439,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MasterWhiteLabelRouteImport
       parentRoute: typeof MasterRoute
     }
+    '/master/segmentos': {
+      id: '/master/segmentos'
+      path: '/segmentos'
+      fullPath: '/master/segmentos'
+      preLoaderRoute: typeof MasterSegmentosRouteImport
+      parentRoute: typeof MasterRoute
+    }
+    '/master/disparos': {
+      id: '/master/disparos'
+      path: '/disparos'
+      fullPath: '/master/disparos'
+      preLoaderRoute: typeof MasterDisparosRouteImport
+      parentRoute: typeof MasterRoute
+    }
     '/master/clinicas': {
       id: '/master/clinicas'
       path: '/clinicas'
       fullPath: '/master/clinicas'
       preLoaderRoute: typeof MasterClinicasRouteImport
+      parentRoute: typeof MasterRoute
+    }
+    '/master/bots': {
+      id: '/master/bots'
+      path: '/bots'
+      fullPath: '/master/bots'
+      preLoaderRoute: typeof MasterBotsRouteImport
       parentRoute: typeof MasterRoute
     }
     '/master/automacoes': {
@@ -405,19 +474,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MasterAutomacoesRouteImport
       parentRoute: typeof MasterRoute
     }
+    '/master/anuncios': {
+      id: '/master/anuncios'
+      path: '/anuncios'
+      fullPath: '/master/anuncios'
+      preLoaderRoute: typeof MasterAnunciosRouteImport
+      parentRoute: typeof MasterRoute
+    }
   }
 }
 
 interface MasterRouteChildren {
+  MasterAnunciosRoute: typeof MasterAnunciosRoute
   MasterAutomacoesRoute: typeof MasterAutomacoesRoute
+  MasterBotsRoute: typeof MasterBotsRoute
   MasterClinicasRoute: typeof MasterClinicasRoute
+  MasterDisparosRoute: typeof MasterDisparosRoute
+  MasterSegmentosRoute: typeof MasterSegmentosRoute
   MasterWhiteLabelRoute: typeof MasterWhiteLabelRoute
   MasterIndexRoute: typeof MasterIndexRoute
 }
 
 const MasterRouteChildren: MasterRouteChildren = {
+  MasterAnunciosRoute: MasterAnunciosRoute,
   MasterAutomacoesRoute: MasterAutomacoesRoute,
+  MasterBotsRoute: MasterBotsRoute,
   MasterClinicasRoute: MasterClinicasRoute,
+  MasterDisparosRoute: MasterDisparosRoute,
+  MasterSegmentosRoute: MasterSegmentosRoute,
   MasterWhiteLabelRoute: MasterWhiteLabelRoute,
   MasterIndexRoute: MasterIndexRoute,
 }
