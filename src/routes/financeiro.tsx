@@ -8,8 +8,9 @@ import {
   Package,
   ArrowUpCircle,
   ArrowDownCircle,
+  PieChart,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ClinicLayout } from "@/components/layouts/clinic-layout";
 import { RequireClinic } from "@/components/require-clinic";
@@ -32,7 +33,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { listTransacoes, listProdutos, createTransacao, createProduto } from "@/lib/supabase/financeiro";
+import {
+  listTransacoes,
+  listProdutos,
+  listCategoriasFinanceiras,
+  createTransacao,
+  createProduto,
+  calcularDre,
+} from "@/lib/supabase/financeiro";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/financeiro")({
@@ -70,6 +78,13 @@ function FinanceiroPage() {
     queryKey: ["produtos"],
     queryFn: listProdutos,
   });
+  const { data: categorias } = useQuery({
+    queryKey: ["categorias-financeiras"],
+    queryFn: listCategoriasFinanceiras,
+  });
+
+  const dre = useMemo(() => calcularDre(transacoes ?? [], categorias), [transacoes, categorias]);
+  const [abaDre, setAbaDre] = useState<"categoria" | "mes">("categoria");
 
   const totalReceitas = (transacoes ?? [])
     .filter((t) => t.tipo === "receita" && t.status === "pago")
@@ -236,6 +251,107 @@ function FinanceiroPage() {
             <p className="mt-2 font-display text-2xl font-bold text-foreground">{brl(valorEstoque)}</p>
           </Card>
         </div>
+
+        {/* DRE — Resultado do Exercício */}
+        <section className="mt-8">
+          <div className="mb-4 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <PieChart className="h-5 w-5 text-primary" />
+              <h2 className="font-display text-lg font-bold text-foreground">DRE — Resultado</h2>
+            </div>
+            <div className="flex overflow-hidden rounded-lg border border-border/60">
+              <button
+                onClick={() => setAbaDre("categoria")}
+                className={`px-3 py-1.5 text-xs font-semibold transition-colors ${abaDre === "categoria" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted/50"}`}
+              >
+                Por categoria
+              </button>
+              <button
+                onClick={() => setAbaDre("mes")}
+                className={`px-3 py-1.5 text-xs font-semibold transition-colors ${abaDre === "mes" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted/50"}`}
+              >
+                Por mês
+              </button>
+            </div>
+          </div>
+
+          <Card className="border-border/60 p-5">
+            {abaDre === "categoria" ? (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+                  <div className="rounded-lg bg-muted/40 p-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Receitas</p>
+                    <p className="mt-1 font-display text-xl font-bold text-success">{brl(dre.totalReceitas)}</p>
+                  </div>
+                  <div className="rounded-lg bg-muted/40 p-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Despesas</p>
+                    <p className="mt-1 font-display text-xl font-bold text-destructive">{brl(dre.totalDespesas)}</p>
+                  </div>
+                  <div className="rounded-lg bg-muted/40 p-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Resultado</p>
+                    <p className={`mt-1 font-display text-xl font-bold ${dre.resultado >= 0 ? "text-foreground" : "text-destructive"}`}>
+                      {brl(dre.resultado)}
+                    </p>
+                  </div>
+                  <div className="rounded-lg bg-muted/40 p-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Margem</p>
+                    <p className={`mt-1 font-display text-xl font-bold ${dre.margem >= 0 ? "text-success" : "text-destructive"}`}>
+                      {dre.margem.toFixed(1)}%
+                    </p>
+                  </div>
+                </div>
+                <div className="overflow-hidden rounded-xl border border-border/60">
+                  <table className="w-full text-sm">
+                    <thead className="bg-muted/50">
+                      <tr className="text-left text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+                        <th className="px-4 py-3">Categoria</th>
+                        <th className="px-4 py-3 text-right">Valor</th>
+                        <th className="px-4 py-3 text-right">%</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border/40">
+                      {(dre.porCategoria.length === 0) && (
+                        <tr><td colSpan={3} className="px-4 py-10 text-center text-muted-foreground">Nenhum lançamento para DRE.</td></tr>
+                      )}
+                      {[...dre.porCategoria]
+                        .sort((a, b) => b.valor - a.valor)
+                        .map((l, i) => (
+                          <tr key={i} className="bg-card hover:bg-muted/30">
+                            <td className="px-4 py-3 font-medium text-foreground">{l.categoria}</td>
+                            <td className={`px-4 py-3 text-right font-semibold ${l.tipo === "receita" ? "text-success" : "text-destructive"}`}>
+                              {l.tipo === "receita" ? "+" : "−"}{brl(l.valor)}
+                            </td>
+                            <td className="px-4 py-3 text-right text-xs text-muted-foreground">{l.percentual.toFixed(1)}%</td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {(dre.porMes.length === 0) && (
+                  <p className="py-8 text-center text-muted-foreground">Sem dados por mês.</p>
+                )}
+                {dre.porMes.map((m) => {
+                  const max = Math.max(m.receitas, m.despesas, 1);
+                  return (
+                    <div key={m.mes} className="flex items-center gap-4">
+                      <span className="w-14 shrink-0 text-xs font-semibold text-muted-foreground">{m.label}</span>
+                      <div className="flex flex-1 items-center gap-1">
+                        <div className="h-5 rounded-sm bg-success/70 transition-all" style={{ width: `${(m.receitas / max) * 100}%` }} title={`Receitas: ${brl(m.receitas)}`} />
+                        <div className="h-5 rounded-sm bg-destructive/70 transition-all" style={{ width: `${(m.despesas / max) * 100}%` }} title={`Despesas: ${brl(m.despesas)}`} />
+                      </div>
+                      <span className={`w-24 shrink-0 text-right text-xs font-semibold ${m.resultado >= 0 ? "text-success" : "text-destructive"}`}>
+                        {brl(m.resultado)}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </Card>
+        </section>
 
         {/* Transações */}
         <section className="mt-8">
