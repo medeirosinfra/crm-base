@@ -139,7 +139,7 @@ Quando voltarmos a trabalhar, seguir este roteiro:
 - **GitHub**: https://github.com/medeirosinfra/crm-base
 - **Supabase via app**: `https://crm.medeirossolucoestech.com.br/supabase`
 - **Supabase Studio (local)**: `http://172.16.0.50:54321/`
-- **Admin**: `admin@medeirossolucoestech.com.br` / `Master@2026`
+- **Admin**: email e senha em variáveis de ambiente (ver `~/.env` no servidor; nunca commitar credenciais)
 - **Backup banco**: `~/backups/`
 
 ## 🔧 INFRA IMPORTANTE (deploy internet)

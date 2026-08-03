@@ -119,4 +119,4 @@ CRM SaaS **white-label multi-tenant** para clínicas: 1 código, N clínicas, ca
 - **App**: `https://crm.medeirossolucoestech.com.br`
 - **Local**: `http://172.16.0.50:3110`
 - **GitHub**: https://github.com/medeirosinfra/crm-base
-- **Admin**: `marcio@medeirossolucoestech.com.br` / `M1rc3nh4@2026`
+- **Admin**: email/senha em variáveis de ambiente no servidor (não commitar credenciais)
