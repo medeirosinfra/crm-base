@@ -22,6 +22,7 @@ import { Route as CampanhasRouteImport } from './routes/campanhas'
 import { Route as AutomacoesRouteImport } from './routes/automacoes'
 import { Route as AgendaRouteImport } from './routes/agenda'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as PacientesIdRouteImport } from './routes/pacientes.$id'
 
 const WhiteLabelRoute = WhiteLabelRouteImport.update({
   id: '/white-label',
@@ -88,6 +89,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PacientesIdRoute = PacientesIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => PacientesRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -99,10 +105,11 @@ export interface FileRoutesByFullPath {
   '/disparador': typeof DisparadorRoute
   '/financeiro': typeof FinanceiroRoute
   '/login': typeof LoginRoute
-  '/pacientes': typeof PacientesRoute
+  '/pacientes': typeof PacientesRouteWithChildren
   '/procedimentos': typeof ProcedimentosRoute
   '/relatorios': typeof RelatoriosRoute
   '/white-label': typeof WhiteLabelRoute
+  '/pacientes/$id': typeof PacientesIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -114,10 +121,11 @@ export interface FileRoutesByTo {
   '/disparador': typeof DisparadorRoute
   '/financeiro': typeof FinanceiroRoute
   '/login': typeof LoginRoute
-  '/pacientes': typeof PacientesRoute
+  '/pacientes': typeof PacientesRouteWithChildren
   '/procedimentos': typeof ProcedimentosRoute
   '/relatorios': typeof RelatoriosRoute
   '/white-label': typeof WhiteLabelRoute
+  '/pacientes/$id': typeof PacientesIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -130,10 +138,11 @@ export interface FileRoutesById {
   '/disparador': typeof DisparadorRoute
   '/financeiro': typeof FinanceiroRoute
   '/login': typeof LoginRoute
-  '/pacientes': typeof PacientesRoute
+  '/pacientes': typeof PacientesRouteWithChildren
   '/procedimentos': typeof ProcedimentosRoute
   '/relatorios': typeof RelatoriosRoute
   '/white-label': typeof WhiteLabelRoute
+  '/pacientes/$id': typeof PacientesIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -151,6 +160,7 @@ export interface FileRouteTypes {
     | '/procedimentos'
     | '/relatorios'
     | '/white-label'
+    | '/pacientes/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -166,6 +176,7 @@ export interface FileRouteTypes {
     | '/procedimentos'
     | '/relatorios'
     | '/white-label'
+    | '/pacientes/$id'
   id:
     | '__root__'
     | '/'
@@ -181,6 +192,7 @@ export interface FileRouteTypes {
     | '/procedimentos'
     | '/relatorios'
     | '/white-label'
+    | '/pacientes/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -193,7 +205,7 @@ export interface RootRouteChildren {
   DisparadorRoute: typeof DisparadorRoute
   FinanceiroRoute: typeof FinanceiroRoute
   LoginRoute: typeof LoginRoute
-  PacientesRoute: typeof PacientesRoute
+  PacientesRoute: typeof PacientesRouteWithChildren
   ProcedimentosRoute: typeof ProcedimentosRoute
   RelatoriosRoute: typeof RelatoriosRoute
   WhiteLabelRoute: typeof WhiteLabelRoute
@@ -292,8 +304,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/pacientes/$id': {
+      id: '/pacientes/$id'
+      path: '/$id'
+      fullPath: '/pacientes/$id'
+      preLoaderRoute: typeof PacientesIdRouteImport
+      parentRoute: typeof PacientesRoute
+    }
   }
 }
+
+interface PacientesRouteChildren {
+  PacientesIdRoute: typeof PacientesIdRoute
+}
+
+const PacientesRouteChildren: PacientesRouteChildren = {
+  PacientesIdRoute: PacientesIdRoute,
+}
+
+const PacientesRouteWithChildren = PacientesRoute._addFileChildren(
+  PacientesRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -305,7 +336,7 @@ const rootRouteChildren: RootRouteChildren = {
   DisparadorRoute: DisparadorRoute,
   FinanceiroRoute: FinanceiroRoute,
   LoginRoute: LoginRoute,
-  PacientesRoute: PacientesRoute,
+  PacientesRoute: PacientesRouteWithChildren,
   ProcedimentosRoute: ProcedimentosRoute,
   RelatoriosRoute: RelatoriosRoute,
   WhiteLabelRoute: WhiteLabelRoute,
