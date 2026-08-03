@@ -1,5 +1,4 @@
 import { supabase } from "./client";
-import { supabaseAdmin } from "./server";
 
 // ============================================================
 // Dashboard com dados REAIS do Supabase
@@ -12,7 +11,7 @@ import { supabaseAdmin } from "./server";
 // Cliente usado: supabaseAdmin para o painel master (todas as clínicas).
 // Se no futuro um admin de clínica usar este dashboard, trocar para
 // `supabase` (RLS filtra pelo tenant logado).
-const db = supabaseAdmin;
+const db = supabase;
 
 export interface DashboardResumo {
   totalPacientes: number;

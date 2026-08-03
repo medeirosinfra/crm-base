@@ -1,11 +1,11 @@
-import { supabaseAdmin } from "./server";
+import { supabase } from "./client";
 
 // ============================================================
 // Relatórios & BI — dados agregados reais
 // Usa supabaseAdmin (service_role) para o painel master.
 // ============================================================
 
-const db = supabaseAdmin;
+const db = supabase;
 
 export interface FaturamentoMensal {
   mes: string;

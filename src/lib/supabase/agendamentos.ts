@@ -1,7 +1,6 @@
 import { supabase } from "./client";
-import { supabaseAdmin } from "./server";
 
-const db = supabaseAdmin;
+const db = supabase;
 
 // ============================================================
 // Service de Agendamentos — CRUD completo com joins

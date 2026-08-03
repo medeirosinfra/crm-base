@@ -1,5 +1,4 @@
 import { supabase } from "./client";
-import { supabaseAdmin } from "./server";
 import type { Database } from "./types";
 
 // Tipos locais (espelham o schema do banco)
@@ -90,7 +89,7 @@ export async function updateTenant(id: string, input: Partial<Tenant>): Promise<
 
 /** Busca tenant pelo slug (subdomínio). Usa service_role para resolução de branding. */
 export async function getTenantBySlug(slug: string): Promise<Tenant | null> {
-  const { data, error } = await supabaseAdmin
+  const { data, error } = await supabase
     .from("tenants")
     .select("*")
     .eq("slug", slug)

@@ -1,10 +1,10 @@
-import { supabaseAdmin } from "./server";
+import { supabase } from "./client";
 
 // ============================================================
 // Service de Pacientes — detalhe, histórico, financeiro
 // ============================================================
 
-const db = supabaseAdmin;
+const db = supabase;
 
 export interface PacienteDetalhe {
   id: string;
