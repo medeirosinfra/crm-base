@@ -25,7 +25,6 @@ import {
   deleteTenant,
   type Tenant,
 } from "@/lib/supabase/tenants";
-import { createClinicWithAdmin } from "@/server-functions/create-clinic";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/master/clinicas")({
@@ -113,19 +112,27 @@ function ClinicasMaster() {
           waha_sessao: form.waha_sessao || null,
         });
       }
-      // Criação com admin automático via server function
-      const result = await createClinicWithAdmin({
-        nome: form.nome,
-        slug: form.slug || form.nome.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
-        especialidade: form.especialidade,
-        adminNome: form.adminNome || form.nome,
-        adminEmail: form.adminEmail,
-        adminSenha: form.adminSenha,
-        corPrimaria: form.cor_primaria,
-        plano: form.plano,
-        wahaSessao: form.waha_sessao || undefined,
+      // Criação com admin automático via rota customizada
+      const resp = await fetch("/api/clinicas", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          nome: form.nome,
+          slug: form.slug || form.nome.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+          especialidade: form.especialidade,
+          adminNome: form.adminNome || form.nome,
+          adminEmail: form.adminEmail,
+          adminSenha: form.adminSenha,
+          corPrimaria: form.cor_primaria,
+          plano: form.plano,
+          wahaSessao: form.waha_sessao || undefined,
+        }),
       });
-      return result;
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({ erro: "Falha ao criar clínica" }));
+        throw new Error(err.erro ?? "Falha ao criar clínica");
+      }
+      return (await resp.json()) as { credenciais: { email: string; senha: string } };
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["tenants"] });

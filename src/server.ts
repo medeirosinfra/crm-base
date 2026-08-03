@@ -16,6 +16,7 @@ let serverEntryPromise: Promise<ServerEntry> | undefined;
 // ============================================================
 import { supabaseAdmin } from "./lib/supabase/server";
 import { sendWhatsAppText } from "./lib/waha";
+import { criarClinica } from "./server-functions/api-clinicas";
 
 interface WahaPayload {
   from?: string;
@@ -101,6 +102,55 @@ async function handleWahaWebhook(request: Request): Promise<Response> {
   }
 }
 
+// ============================================================
+// POST /api/clinicas — criar clínica com admin automático
+// (rota customizada que contorna o server-fn do TanStack no Docker)
+// ============================================================
+async function handleCreateClinica(request: Request): Promise<Response> {
+  try {
+    const body = (await request.json().catch(() => ({}))) as {
+      nome?: string;
+      slug?: string;
+      especialidade?: string;
+      adminEmail?: string;
+      adminNome?: string;
+      adminSenha?: string;
+      corPrimaria?: string;
+      plano?: string;
+      wahaSessao?: string;
+    };
+
+    if (!body.nome || !body.adminEmail || !body.adminSenha) {
+      return new Response(JSON.stringify({ erro: "nome, adminEmail e adminSenha são obrigatórios" }), {
+        status: 400,
+        headers: { "content-type": "application/json" },
+      });
+    }
+
+    const resultado = await criarClinica({
+      nome: body.nome,
+      slug: body.slug || body.nome.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+      especialidade: body.especialidade ?? "Clínica",
+      adminEmail: body.adminEmail,
+      adminNome: body.adminNome || body.nome,
+      adminSenha: body.adminSenha,
+      corPrimaria: body.corPrimaria,
+      plano: body.plano,
+      wahaSessao: body.wahaSessao,
+    });
+
+    return new Response(JSON.stringify(resultado), {
+      status: 201,
+      headers: { "content-type": "application/json" },
+    });
+  } catch (e) {
+    return new Response(JSON.stringify({ erro: String((e as Error).message ?? e) }), {
+      status: 500,
+      headers: { "content-type": "application/json" },
+    });
+  }
+}
+
 async function getServerEntry(): Promise<ServerEntry> {
   if (!serverEntryPromise) {
     serverEntryPromise = import("@tanstack/react-start/server-entry").then(
@@ -141,6 +191,11 @@ export default {
     // Webhook do WAHA — intercepta antes do router
     if (request.method === "POST" && new URL(request.url).pathname === "/webhook/waha") {
       return handleWahaWebhook(request);
+    }
+
+    // Criar clínica — rota customizada (contorna server-fn)
+    if (request.method === "POST" && new URL(request.url).pathname === "/api/clinicas") {
+      return handleCreateClinica(request);
     }
 
     try {

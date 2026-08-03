@@ -34,3 +34,4 @@ dist-ssr
 
 # Migrações locais aplicadas (rastreamento)
 database/.applied/
+.env*
