@@ -11,8 +11,8 @@ import {
 } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { AppShell } from "@/components/app-shell";
-import { RequireAuth } from "@/components/require-auth";
+import { ClinicLayout } from "@/components/layouts/clinic-layout";
+import { RequireClinic } from "@/components/require-clinic";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -49,9 +49,9 @@ export const Route = createFileRoute("/agenda")({
     meta: [{ title: "Agenda & Agendamentos — MedeirosInfra" }],
   }),
   component: () => (
-    <RequireAuth>
+    <RequireClinic>
       <AgendaPage />
-    </RequireAuth>
+    </RequireClinic>
   ),
 });
 
@@ -156,7 +156,7 @@ function AgendaPage() {
     });
 
   return (
-    <AppShell>
+    <ClinicLayout>
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-8">
         <header className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
           <div>
@@ -381,6 +381,6 @@ function AgendaPage() {
           )}
         </div>
       </div>
-    </AppShell>
+    </ClinicLayout>
   );
 }

@@ -2,8 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Scissors, Plus, Loader2, Trash2, Clock, Tag } from "lucide-react";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { AppShell } from "@/components/app-shell";
-import { RequireAuth } from "@/components/require-auth";
+import { ClinicLayout } from "@/components/layouts/clinic-layout";
+import { RequireClinic } from "@/components/require-clinic";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,9 +24,9 @@ export const Route = createFileRoute("/procedimentos")({
     meta: [{ title: "Procedimentos & Tratamentos — MedeirosInfra" }],
   }),
   component: () => (
-    <RequireAuth>
+    <RequireClinic>
       <ProcedimentosPage />
-    </RequireAuth>
+    </RequireClinic>
   ),
 });
 
@@ -81,7 +81,7 @@ function ProcedimentosPage() {
   const categorias = [...new Set((procedimentos ?? []).map((p) => p.categoria).filter(Boolean))] as string[];
 
   return (
-    <AppShell>
+    <ClinicLayout>
       <div className="mx-auto max-w-6xl px-4 py-8 sm:px-8">
         <header className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
           <div>
@@ -207,6 +207,6 @@ function ProcedimentosPage() {
           )}
         </div>
       </div>
-    </AppShell>
+    </ClinicLayout>
   );
 }

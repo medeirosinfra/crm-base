@@ -10,8 +10,8 @@ import {
   TrendingDown,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { AppShell } from "@/components/app-shell";
-import { RequireAuth } from "@/components/require-auth";
+import { ClinicLayout } from "@/components/layouts/clinic-layout";
+import { RequireClinic } from "@/components/require-clinic";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -28,9 +28,9 @@ export const Route = createFileRoute("/relatorios")({
     meta: [{ title: "Relatórios & BI — MedeirosInfra" }],
   }),
   component: () => (
-    <RequireAuth>
+    <RequireClinic>
       <RelatoriosPage />
-    </RequireAuth>
+    </RequireClinic>
   ),
 });
 
@@ -63,7 +63,7 @@ function RelatoriosPage() {
   const maxProced = Math.max(...(procedimentos ?? []).map((p) => p.quantidade, 1));
 
   return (
-    <AppShell>
+    <ClinicLayout>
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-8">
         <header>
           <p className="text-[11px] font-semibold uppercase tracking-widest text-primary">
@@ -256,6 +256,6 @@ function RelatoriosPage() {
           </TabsContent>
         </Tabs>
       </div>
-    </AppShell>
+    </ClinicLayout>
   );
 }

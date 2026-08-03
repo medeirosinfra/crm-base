@@ -2,8 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Users, Search, Plus, Loader2, Phone, Mail } from "lucide-react";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { AppShell } from "@/components/app-shell";
-import { RequireAuth } from "@/components/require-auth";
+import { ClinicLayout } from "@/components/layouts/clinic-layout";
+import { RequireClinic } from "@/components/require-clinic";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,9 +23,9 @@ export const Route = createFileRoute("/pacientes")({
     meta: [{ title: "Pacientes — MedeirosInfra" }],
   }),
   component: () => (
-    <RequireAuth>
+    <RequireClinic>
       <PacientesPage />
-    </RequireAuth>
+    </RequireClinic>
   ),
 });
 
@@ -69,7 +69,7 @@ function PacientesPage() {
   );
 
   return (
-    <AppShell>
+    <ClinicLayout>
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-8">
         <header className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
           <div>
@@ -171,6 +171,6 @@ function PacientesPage() {
           )}
         </div>
       </div>
-    </AppShell>
+    </ClinicLayout>
   );
 }

@@ -1,0 +1,88 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { Building2, Users, Wallet, Scissors, Loader2, TrendingUp } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Card } from "@/components/ui/card";
+import { getTotaisRelatorio } from "@/lib/supabase/relatorios";
+import { listTenants } from "@/lib/supabase/tenants";
+import { formatBRLInt } from "@/lib/formatters";
+
+export const Route = createFileRoute("/master/")({
+  head: () => ({
+    meta: [
+      { title: "Visão do Ecossistema — MedeirosInfra Master" },
+      { name: "description", content: "Métricas agregadas de todas as clínicas da plataforma." },
+    ],
+  }),
+  component: MasterDashboard,
+});
+
+function MasterDashboard() {
+  const { data: totais, isLoading } = useQuery({ queryKey: ["master", "totais"], queryFn: getTotaisRelatorio });
+  const { data: tenants } = useQuery({ queryKey: ["tenants"], queryFn: listTenants });
+
+  const stats = [
+    { label: "Clínicas Ativas", value: String(tenants?.length ?? 0), icon: Building2 },
+    { label: "Pacientes", value: String(totais?.pacientes ?? 0), icon: Users },
+    { label: "Receitas", value: formatBRLInt(totais?.receitas ?? 0), icon: Wallet },
+    { label: "Agendamentos", value: String(totais?.agendamentos ?? 0), icon: Scissors },
+  ];
+
+  return (
+    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-8">
+      <header>
+        <p className="text-[11px] font-semibold uppercase tracking-widest text-primary">Painel Master</p>
+        <h1 className="mt-1 font-display text-3xl font-bold text-foreground sm:text-4xl">Visão do Ecossistema</h1>
+        <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+          Métricas agregadas de todas as clínicas white-label da plataforma.
+        </p>
+      </header>
+
+      {isLoading ? (
+        <div className="mt-8 grid place-items-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
+      ) : (
+        <>
+          <section className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {stats.map((s) => (
+              <Card key={s.label} className="border-border/60 p-5">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{s.label}</p>
+                    <p className="mt-2 font-display text-2xl font-bold text-foreground">{s.value}</p>
+                  </div>
+                  <div className="grid h-10 w-10 place-items-center rounded-lg bg-primary/10 text-primary">
+                    <s.icon className="h-5 w-5" />
+                  </div>
+                </div>
+              </Card>
+            ))}
+          </section>
+
+          <section className="mt-8">
+            <Card className="gradient-surface border-border/60 p-6">
+              <div className="flex items-center gap-2">
+                <TrendingUp className="h-5 w-5 text-primary" />
+                <h2 className="font-display text-lg font-bold text-foreground">Clínicas da plataforma</h2>
+              </div>
+              <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {(tenants ?? []).map((t) => (
+                  <div key={t.id} className="rounded-xl border border-border/60 bg-card/50 p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-sm font-bold text-white" style={{ background: t.cor_primaria }}>
+                        {t.nome.charAt(0)}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-foreground">{t.nome}</p>
+                        <p className="truncate text-[11px] text-muted-foreground">{t.especialidade ?? "Clínica"} · {t.status}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                {(tenants ?? []).length === 0 && <p className="text-sm text-muted-foreground">Nenhuma clínica cadastrada.</p>}
+              </div>
+            </Card>
+          </section>
+        </>
+      )}
+    </div>
+  );
+}

@@ -2,8 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Send, Loader2, Radio, MessageSquareMore, CheckCircle2, XCircle } from "lucide-react";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { AppShell } from "@/components/app-shell";
-import { RequireAuth } from "@/components/require-auth";
+import { ClinicLayout } from "@/components/layouts/clinic-layout";
+import { RequireClinic } from "@/components/require-clinic";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,9 +17,9 @@ export const Route = createFileRoute("/disparador")({
     meta: [{ title: "Disparador Multicanal — MedeirosInfra" }],
   }),
   component: () => (
-    <RequireAuth>
+    <RequireClinic>
       <DisparadorPage />
-    </RequireAuth>
+    </RequireClinic>
   ),
 });
 
@@ -62,7 +62,7 @@ function DisparadorPage() {
   };
 
   return (
-    <AppShell>
+    <ClinicLayout>
       <div className="mx-auto max-w-4xl px-4 py-8 sm:px-8">
         <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
@@ -181,6 +181,6 @@ function DisparadorPage() {
           </Card>
         </div>
       </div>
-    </AppShell>
+    </ClinicLayout>
   );
 }

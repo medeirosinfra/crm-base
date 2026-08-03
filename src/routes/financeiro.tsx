@@ -11,8 +11,8 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { AppShell } from "@/components/app-shell";
-import { RequireAuth } from "@/components/require-auth";
+import { ClinicLayout } from "@/components/layouts/clinic-layout";
+import { RequireClinic } from "@/components/require-clinic";
 import { RequireRole } from "@/components/require-role";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -40,11 +40,11 @@ export const Route = createFileRoute("/financeiro")({
     meta: [{ title: "Financeiro & Estoque — MedeirosInfra" }],
   }),
   component: () => (
-    <RequireAuth>
+    <RequireClinic>
       <RequireRole modulo="financeiro">
         <FinanceiroPage />
       </RequireRole>
-    </RequireAuth>
+    </RequireClinic>
   ),
 });
 
@@ -122,7 +122,7 @@ function FinanceiroPage() {
   });
 
   return (
-    <AppShell>
+    <ClinicLayout>
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-8">
         <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
@@ -309,6 +309,6 @@ function FinanceiroPage() {
           </div>
         </section>
       </div>
-    </AppShell>
+    </ClinicLayout>
   );
 }

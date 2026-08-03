@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Loader2, LogIn, Building2, Sparkles } from "lucide-react";
-import { useState, type FormEvent } from "react";
+import { useState, useEffect, type FormEvent } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,30 +29,35 @@ function getSubdomainFromHost(host: string): string | null {
 
 function LoginPage() {
   const navigate = useNavigate();
-  const { signIn } = useAuth();
+  const { signIn, user, isMaster, loading } = useAuth();
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loadingForm, setLoadingForm] = useState(false);
 
   // Resolve a clínica pelo subdomínio (para exibir o nome)
   const subdomain = typeof window !== "undefined" ? getSubdomainFromHost(window.location.host) : null;
 
+  // Redireciona após login quando o cargo estiver carregado
+  useEffect(() => {
+    if (!loading && user) {
+      navigate({ to: isMaster ? "/master" : "/agenda" });
+    }
+  }, [loading, user, isMaster, navigate]);
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
-    setLoading(true);
+    setLoadingForm(true);
 
     const { error: signInError } = await signIn(email.trim(), senha);
-    setLoading(false);
+    setLoadingForm(false);
 
     if (signInError) {
       setError(signInError);
       return;
     }
-
-    // Login OK → vai para o dashboard
-    navigate({ to: "/" });
+    // O useEffect acima redireciona quando o cargo carregar
   };
 
   return (
@@ -110,11 +115,11 @@ function LoginPage() {
 
             <Button
               type="submit"
-              disabled={loading}
+              disabled={loadingForm || loading}
               size="lg"
               className="gradient-primary w-full shadow-glow font-semibold"
             >
-              {loading ? (
+              {loadingForm ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               ) : (
                 <LogIn className="mr-2 h-4 w-4" />

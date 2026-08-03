@@ -9,27 +9,24 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as WhiteLabelRouteImport } from './routes/white-label'
 import { Route as RelatoriosRouteImport } from './routes/relatorios'
 import { Route as ProcedimentosRouteImport } from './routes/procedimentos'
 import { Route as PacientesRouteImport } from './routes/pacientes'
+import { Route as MasterRouteImport } from './routes/master'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as FinanceiroRouteImport } from './routes/financeiro'
 import { Route as DisparadorRouteImport } from './routes/disparador'
 import { Route as ContatosRouteImport } from './routes/contatos'
-import { Route as ClinicasRouteImport } from './routes/clinicas'
 import { Route as CampanhasRouteImport } from './routes/campanhas'
-import { Route as AutomacoesRouteImport } from './routes/automacoes'
 import { Route as AnamneseRouteImport } from './routes/anamnese'
 import { Route as AgendaRouteImport } from './routes/agenda'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as MasterIndexRouteImport } from './routes/master/index'
 import { Route as PacientesIdRouteImport } from './routes/pacientes.$id'
+import { Route as MasterWhiteLabelRouteImport } from './routes/master/white-label'
+import { Route as MasterClinicasRouteImport } from './routes/master/clinicas'
+import { Route as MasterAutomacoesRouteImport } from './routes/master/automacoes'
 
-const WhiteLabelRoute = WhiteLabelRouteImport.update({
-  id: '/white-label',
-  path: '/white-label',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const RelatoriosRoute = RelatoriosRouteImport.update({
   id: '/relatorios',
   path: '/relatorios',
@@ -43,6 +40,11 @@ const ProcedimentosRoute = ProcedimentosRouteImport.update({
 const PacientesRoute = PacientesRouteImport.update({
   id: '/pacientes',
   path: '/pacientes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MasterRoute = MasterRouteImport.update({
+  id: '/master',
+  path: '/master',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -65,19 +67,9 @@ const ContatosRoute = ContatosRouteImport.update({
   path: '/contatos',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ClinicasRoute = ClinicasRouteImport.update({
-  id: '/clinicas',
-  path: '/clinicas',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const CampanhasRoute = CampanhasRouteImport.update({
   id: '/campanhas',
   path: '/campanhas',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AutomacoesRoute = AutomacoesRouteImport.update({
-  id: '/automacoes',
-  path: '/automacoes',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AnamneseRoute = AnamneseRouteImport.update({
@@ -95,36 +87,56 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MasterIndexRoute = MasterIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => MasterRoute,
+} as any)
 const PacientesIdRoute = PacientesIdRouteImport.update({
   id: '/$id',
   path: '/$id',
   getParentRoute: () => PacientesRoute,
+} as any)
+const MasterWhiteLabelRoute = MasterWhiteLabelRouteImport.update({
+  id: '/white-label',
+  path: '/white-label',
+  getParentRoute: () => MasterRoute,
+} as any)
+const MasterClinicasRoute = MasterClinicasRouteImport.update({
+  id: '/clinicas',
+  path: '/clinicas',
+  getParentRoute: () => MasterRoute,
+} as any)
+const MasterAutomacoesRoute = MasterAutomacoesRouteImport.update({
+  id: '/automacoes',
+  path: '/automacoes',
+  getParentRoute: () => MasterRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/agenda': typeof AgendaRoute
   '/anamnese': typeof AnamneseRoute
-  '/automacoes': typeof AutomacoesRoute
   '/campanhas': typeof CampanhasRoute
-  '/clinicas': typeof ClinicasRoute
   '/contatos': typeof ContatosRoute
   '/disparador': typeof DisparadorRoute
   '/financeiro': typeof FinanceiroRoute
   '/login': typeof LoginRoute
+  '/master': typeof MasterRouteWithChildren
   '/pacientes': typeof PacientesRouteWithChildren
   '/procedimentos': typeof ProcedimentosRoute
   '/relatorios': typeof RelatoriosRoute
-  '/white-label': typeof WhiteLabelRoute
+  '/master/automacoes': typeof MasterAutomacoesRoute
+  '/master/clinicas': typeof MasterClinicasRoute
+  '/master/white-label': typeof MasterWhiteLabelRoute
   '/pacientes/$id': typeof PacientesIdRoute
+  '/master/': typeof MasterIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/agenda': typeof AgendaRoute
   '/anamnese': typeof AnamneseRoute
-  '/automacoes': typeof AutomacoesRoute
   '/campanhas': typeof CampanhasRoute
-  '/clinicas': typeof ClinicasRoute
   '/contatos': typeof ContatosRoute
   '/disparador': typeof DisparadorRoute
   '/financeiro': typeof FinanceiroRoute
@@ -132,26 +144,31 @@ export interface FileRoutesByTo {
   '/pacientes': typeof PacientesRouteWithChildren
   '/procedimentos': typeof ProcedimentosRoute
   '/relatorios': typeof RelatoriosRoute
-  '/white-label': typeof WhiteLabelRoute
+  '/master/automacoes': typeof MasterAutomacoesRoute
+  '/master/clinicas': typeof MasterClinicasRoute
+  '/master/white-label': typeof MasterWhiteLabelRoute
   '/pacientes/$id': typeof PacientesIdRoute
+  '/master': typeof MasterIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/agenda': typeof AgendaRoute
   '/anamnese': typeof AnamneseRoute
-  '/automacoes': typeof AutomacoesRoute
   '/campanhas': typeof CampanhasRoute
-  '/clinicas': typeof ClinicasRoute
   '/contatos': typeof ContatosRoute
   '/disparador': typeof DisparadorRoute
   '/financeiro': typeof FinanceiroRoute
   '/login': typeof LoginRoute
+  '/master': typeof MasterRouteWithChildren
   '/pacientes': typeof PacientesRouteWithChildren
   '/procedimentos': typeof ProcedimentosRoute
   '/relatorios': typeof RelatoriosRoute
-  '/white-label': typeof WhiteLabelRoute
+  '/master/automacoes': typeof MasterAutomacoesRoute
+  '/master/clinicas': typeof MasterClinicasRoute
+  '/master/white-label': typeof MasterWhiteLabelRoute
   '/pacientes/$id': typeof PacientesIdRoute
+  '/master/': typeof MasterIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -159,26 +176,26 @@ export interface FileRouteTypes {
     | '/'
     | '/agenda'
     | '/anamnese'
-    | '/automacoes'
     | '/campanhas'
-    | '/clinicas'
     | '/contatos'
     | '/disparador'
     | '/financeiro'
     | '/login'
+    | '/master'
     | '/pacientes'
     | '/procedimentos'
     | '/relatorios'
-    | '/white-label'
+    | '/master/automacoes'
+    | '/master/clinicas'
+    | '/master/white-label'
     | '/pacientes/$id'
+    | '/master/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/agenda'
     | '/anamnese'
-    | '/automacoes'
     | '/campanhas'
-    | '/clinicas'
     | '/contatos'
     | '/disparador'
     | '/financeiro'
@@ -186,53 +203,49 @@ export interface FileRouteTypes {
     | '/pacientes'
     | '/procedimentos'
     | '/relatorios'
-    | '/white-label'
+    | '/master/automacoes'
+    | '/master/clinicas'
+    | '/master/white-label'
     | '/pacientes/$id'
+    | '/master'
   id:
     | '__root__'
     | '/'
     | '/agenda'
     | '/anamnese'
-    | '/automacoes'
     | '/campanhas'
-    | '/clinicas'
     | '/contatos'
     | '/disparador'
     | '/financeiro'
     | '/login'
+    | '/master'
     | '/pacientes'
     | '/procedimentos'
     | '/relatorios'
-    | '/white-label'
+    | '/master/automacoes'
+    | '/master/clinicas'
+    | '/master/white-label'
     | '/pacientes/$id'
+    | '/master/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AgendaRoute: typeof AgendaRoute
   AnamneseRoute: typeof AnamneseRoute
-  AutomacoesRoute: typeof AutomacoesRoute
   CampanhasRoute: typeof CampanhasRoute
-  ClinicasRoute: typeof ClinicasRoute
   ContatosRoute: typeof ContatosRoute
   DisparadorRoute: typeof DisparadorRoute
   FinanceiroRoute: typeof FinanceiroRoute
   LoginRoute: typeof LoginRoute
+  MasterRoute: typeof MasterRouteWithChildren
   PacientesRoute: typeof PacientesRouteWithChildren
   ProcedimentosRoute: typeof ProcedimentosRoute
   RelatoriosRoute: typeof RelatoriosRoute
-  WhiteLabelRoute: typeof WhiteLabelRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/white-label': {
-      id: '/white-label'
-      path: '/white-label'
-      fullPath: '/white-label'
-      preLoaderRoute: typeof WhiteLabelRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/relatorios': {
       id: '/relatorios'
       path: '/relatorios'
@@ -252,6 +265,13 @@ declare module '@tanstack/react-router' {
       path: '/pacientes'
       fullPath: '/pacientes'
       preLoaderRoute: typeof PacientesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/master': {
+      id: '/master'
+      path: '/master'
+      fullPath: '/master'
+      preLoaderRoute: typeof MasterRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -282,25 +302,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ContatosRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/clinicas': {
-      id: '/clinicas'
-      path: '/clinicas'
-      fullPath: '/clinicas'
-      preLoaderRoute: typeof ClinicasRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/campanhas': {
       id: '/campanhas'
       path: '/campanhas'
       fullPath: '/campanhas'
       preLoaderRoute: typeof CampanhasRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/automacoes': {
-      id: '/automacoes'
-      path: '/automacoes'
-      fullPath: '/automacoes'
-      preLoaderRoute: typeof AutomacoesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/anamnese': {
@@ -324,6 +330,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/master/': {
+      id: '/master/'
+      path: '/'
+      fullPath: '/master/'
+      preLoaderRoute: typeof MasterIndexRouteImport
+      parentRoute: typeof MasterRoute
+    }
     '/pacientes/$id': {
       id: '/pacientes/$id'
       path: '/$id'
@@ -331,8 +344,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PacientesIdRouteImport
       parentRoute: typeof PacientesRoute
     }
+    '/master/white-label': {
+      id: '/master/white-label'
+      path: '/white-label'
+      fullPath: '/master/white-label'
+      preLoaderRoute: typeof MasterWhiteLabelRouteImport
+      parentRoute: typeof MasterRoute
+    }
+    '/master/clinicas': {
+      id: '/master/clinicas'
+      path: '/clinicas'
+      fullPath: '/master/clinicas'
+      preLoaderRoute: typeof MasterClinicasRouteImport
+      parentRoute: typeof MasterRoute
+    }
+    '/master/automacoes': {
+      id: '/master/automacoes'
+      path: '/automacoes'
+      fullPath: '/master/automacoes'
+      preLoaderRoute: typeof MasterAutomacoesRouteImport
+      parentRoute: typeof MasterRoute
+    }
   }
 }
+
+interface MasterRouteChildren {
+  MasterAutomacoesRoute: typeof MasterAutomacoesRoute
+  MasterClinicasRoute: typeof MasterClinicasRoute
+  MasterWhiteLabelRoute: typeof MasterWhiteLabelRoute
+  MasterIndexRoute: typeof MasterIndexRoute
+}
+
+const MasterRouteChildren: MasterRouteChildren = {
+  MasterAutomacoesRoute: MasterAutomacoesRoute,
+  MasterClinicasRoute: MasterClinicasRoute,
+  MasterWhiteLabelRoute: MasterWhiteLabelRoute,
+  MasterIndexRoute: MasterIndexRoute,
+}
+
+const MasterRouteWithChildren =
+  MasterRoute._addFileChildren(MasterRouteChildren)
 
 interface PacientesRouteChildren {
   PacientesIdRoute: typeof PacientesIdRoute
@@ -350,17 +401,15 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AgendaRoute: AgendaRoute,
   AnamneseRoute: AnamneseRoute,
-  AutomacoesRoute: AutomacoesRoute,
   CampanhasRoute: CampanhasRoute,
-  ClinicasRoute: ClinicasRoute,
   ContatosRoute: ContatosRoute,
   DisparadorRoute: DisparadorRoute,
   FinanceiroRoute: FinanceiroRoute,
   LoginRoute: LoginRoute,
+  MasterRoute: MasterRouteWithChildren,
   PacientesRoute: PacientesRouteWithChildren,
   ProcedimentosRoute: ProcedimentosRoute,
   RelatoriosRoute: RelatoriosRoute,
-  WhiteLabelRoute: WhiteLabelRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

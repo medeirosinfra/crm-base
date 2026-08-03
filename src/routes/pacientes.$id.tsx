@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ArrowLeft, Users, Wallet, CalendarDays, Loader2, Phone, Mail, Scissors } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { AppShell } from "@/components/app-shell";
-import { RequireAuth } from "@/components/require-auth";
+import { ClinicLayout } from "@/components/layouts/clinic-layout";
+import { RequireClinic } from "@/components/require-clinic";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -16,9 +16,9 @@ import { Link } from "@tanstack/react-router";
 export const Route = createFileRoute("/pacientes/$id")({
   head: () => ({ meta: [{ title: "Detalhe do Paciente — MedeirosInfra" }] }),
   component: () => (
-    <RequireAuth>
+    <RequireClinic>
       <PacienteDetalhePage />
-    </RequireAuth>
+    </RequireClinic>
   ),
 });
 
@@ -52,26 +52,26 @@ function PacienteDetalhePage() {
 
   if (isLoading) {
     return (
-      <AppShell>
+      <ClinicLayout>
         <div className="grid min-h-[60vh] place-items-center">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
-      </AppShell>
+      </ClinicLayout>
     );
   }
 
   if (!paciente) {
     return (
-      <AppShell>
+      <ClinicLayout>
         <div className="grid min-h-[60vh] place-items-center text-muted-foreground">
           Paciente não encontrado.
         </div>
-      </AppShell>
+      </ClinicLayout>
     );
   }
 
   return (
-    <AppShell>
+    <ClinicLayout>
       <div className="mx-auto max-w-6xl px-4 py-8 sm:px-8">
         <Link to="/pacientes" className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground">
           <ArrowLeft className="h-3.5 w-3.5" /> Voltar para pacientes
@@ -246,6 +246,6 @@ function PacienteDetalhePage() {
           </TabsContent>
         </Tabs>
       </div>
-    </AppShell>
+    </ClinicLayout>
   );
 }

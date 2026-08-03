@@ -10,8 +10,8 @@ import {
   Megaphone,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { AppShell } from "@/components/app-shell";
-import { RequireAuth } from "@/components/require-auth";
+import { ClinicLayout } from "@/components/layouts/clinic-layout";
+import { RequireClinic } from "@/components/require-clinic";
 import { Card } from "@/components/ui/card";
 import { getDashboardResumo, getFaturamentoMensal } from "@/lib/supabase/dashboard";
 import { queryKeys } from "@/lib/query-keys";
@@ -29,9 +29,9 @@ export const Route = createFileRoute("/")({
     ],
   }),
   component: () => (
-    <RequireAuth>
+    <RequireClinic>
       <DashboardPage />
-    </RequireAuth>
+    </RequireClinic>
   ),
 });
 
@@ -60,7 +60,7 @@ function DashboardPage() {
     : [];
 
   return (
-    <AppShell>
+    <ClinicLayout>
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-8">
         <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
@@ -194,6 +194,6 @@ function DashboardPage() {
           </>
         )}
       </div>
-    </AppShell>
+    </ClinicLayout>
   );
 }
