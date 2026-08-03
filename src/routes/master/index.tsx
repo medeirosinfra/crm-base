@@ -1,7 +1,8 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { Building2, Users, Wallet, Scissors, Loader2, TrendingUp } from "lucide-react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { Building2, Users, Wallet, Scissors, Loader2, TrendingUp, Plus } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { getTotaisRelatorio } from "@/lib/supabase/relatorios";
 import { listTenants } from "@/lib/supabase/tenants";
 import { formatBRLInt } from "@/lib/formatters";
@@ -29,12 +30,19 @@ function MasterDashboard() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-8">
-      <header>
-        <p className="text-[11px] font-semibold uppercase tracking-widest text-primary">Painel Master</p>
-        <h1 className="mt-1 font-display text-3xl font-bold text-foreground sm:text-4xl">Visão do Ecossistema</h1>
-        <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-          Métricas agregadas de todas as clínicas white-label da plataforma.
-        </p>
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-widest text-primary">Painel Master</p>
+          <h1 className="mt-1 font-display text-3xl font-bold text-foreground sm:text-4xl">Visão do Ecossistema</h1>
+          <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+            Métricas agregadas de todas as clínicas white-label da plataforma.
+          </p>
+        </div>
+        <Link to="/master/clinicas">
+          <Button size="lg" className="gradient-primary shadow-glow font-semibold">
+            <Plus className="mr-1.5 h-4 w-4" /> Novo Cliente
+          </Button>
+        </Link>
       </header>
 
       {isLoading ? (
@@ -59,13 +67,18 @@ function MasterDashboard() {
 
           <section className="mt-8">
             <Card className="gradient-surface border-border/60 p-6">
-              <div className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-primary" />
-                <h2 className="font-display text-lg font-bold text-foreground">Clínicas da plataforma</h2>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5 text-primary" />
+                  <h2 className="font-display text-lg font-bold text-foreground">Clínicas da plataforma</h2>
+                </div>
+                <Link to="/master/clinicas" className="text-xs font-semibold text-primary hover:underline">
+                  Ver todas →
+                </Link>
               </div>
               <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {(tenants ?? []).map((t) => (
-                  <div key={t.id} className="rounded-xl border border-border/60 bg-card/50 p-4">
+                  <Link to="/master/clinicas" key={t.id} className="rounded-xl border border-border/60 bg-card/50 p-4 transition-all hover:border-primary/40 hover:shadow-glow">
                     <div className="flex items-center gap-3">
                       <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-sm font-bold text-white" style={{ background: t.cor_primaria }}>
                         {t.nome.charAt(0)}
@@ -75,9 +88,13 @@ function MasterDashboard() {
                         <p className="truncate text-[11px] text-muted-foreground">{t.especialidade ?? "Clínica"} · {t.status}</p>
                       </div>
                     </div>
-                  </div>
+                  </Link>
                 ))}
-                {(tenants ?? []).length === 0 && <p className="text-sm text-muted-foreground">Nenhuma clínica cadastrada.</p>}
+                {(tenants ?? []).length === 0 && (
+                  <Link to="/master/clinicas" className="col-span-full rounded-xl border border-dashed border-border/60 p-6 text-center text-sm text-muted-foreground hover:border-primary/40 hover:text-primary">
+                    + Cadastrar o primeiro cliente
+                  </Link>
+                )}
               </div>
             </Card>
           </section>
