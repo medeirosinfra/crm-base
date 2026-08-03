@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase/client";
+import { useAuth } from "@/lib/auth-context";
 import { applyTenantTheme, getTenantThemeFromStorage } from "@/lib/theme";
 
 // Busca o tenant do usuário logado (via profile → tenant)
@@ -28,11 +29,16 @@ async function fetchUserTenant() {
   return tenant;
 }
 
-// Hook que aplica o tema white-label do tenant logado
+// Hook que aplica o tema white-label do tenant logado.
+// Reage à sessão (useAuth) para reaplicar a cor ao trocar de usuário
+// (ex: logout do master → login da clínica), evitando o fallback rosa.
 export function useTenantTheme() {
+  const { user } = useAuth();
+
   const { data: tenant } = useQuery({
-    queryKey: ["user-tenant-theme"],
+    queryKey: ["user-tenant-theme", user?.id ?? "anon"],
     queryFn: fetchUserTenant,
+    enabled: !!user,
     staleTime: 5 * 60 * 1000, // 5 min
   });
 
@@ -43,9 +49,12 @@ export function useTenantTheme() {
         corPrimaria: tenant.cor_primaria,
         corSegundaria: tenant.cor_segundaria,
       });
+    } else if (!user) {
+      // Sem usuário logado → volta ao tema padrão
+      applyTenantTheme(null);
     } else {
       const saved = getTenantThemeFromStorage();
       if (saved) applyTenantTheme(saved);
     }
-  }, [tenant]);
+  }, [tenant, user]);
 }
