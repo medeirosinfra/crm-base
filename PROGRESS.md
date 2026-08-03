@@ -109,6 +109,13 @@ CRM SaaS **white-label multi-tenant** para clínicas: 1 código, N clínicas, ca
 - Também: `SUPABASE_URL` do server → Kong local `172.16.0.50:54321` (não mais pela internet/Cloudflare)
 - **Testado**: criação de clínica de Estética via rota → tenant + admin + profile + funcionário criados ✓
 
+### 🧹 SISTEMA ZERADO (03/08) — pronto para clientes reais
+- Todas as clínicas de exemplo (Odonto Pró, Slim Body, Derma Plus) **removidas**
+- **0 clientes, 0 dados**: pacientes, agendamentos, funcionários, setores, bots, transações, produtos, procedimentos, profissionais — tudo zerado
+- **Mantidos**: 2 super_admins (`admin@medeirossolucoestech.com.br`, `marcio@medeirossolucoestech.com.br`)
+- **Configuração preservada**: 5 segmentos, 15 módulos, 57 segmento_modulos (menus por segmento)
+- **Próximo passo**: cadastrar os clientes reais via "+ Novo Cliente" (criação funcionando — rota `/api/clinicas`)
+
 ### Infra/migrações
 - Descoberto: banco principal é `supabase` (tabelas completas). `crm_base` é órfão
 - 10 migrations já aplicadas; marcadas como `.applied` para `migrate.sh` parar de tentar reaplicar
