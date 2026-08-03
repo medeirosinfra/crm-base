@@ -13,6 +13,9 @@ export interface Funcionario {
   setor_id: string | null;
   telefone: string | null;
   email: string | null;
+  cpf?: string | null;
+  especialidade?: string | null;
+  observacoes?: string | null;
   ativo: boolean;
   created_at: string;
   setor?: { nome: string } | null;

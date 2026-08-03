@@ -8,6 +8,7 @@ import {
   Scissors,
   Megaphone,
   MessageSquareMore,
+  MessageCircle,
   Wallet,
   BarChart3,
   Palette,
@@ -50,6 +51,7 @@ const ICONES: Record<string, LucideIcon> = {
   "shield-check": ShieldCheck,
   package: Package,
   "building-2": Building2,
+  "message-circle": MessageCircle,
 };
 
 /** Retorna o ícone para um código (fallback: LayoutDashboard). */

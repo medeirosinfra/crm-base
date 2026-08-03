@@ -28,6 +28,7 @@ export type Modulo =
   | "disparador"
   | "financeiro"
   | "parcelas"
+  | "whatsapp"
   | "white_label"
   | "automacoes"
   | "relatorios"
@@ -46,6 +47,7 @@ export const MODULO_LABELS: Record<Modulo, string> = {
   disparador: "Disparador WhatsApp",
   financeiro: "Financeiro",
   parcelas: "Parcelas",
+  whatsapp: "WhatsApp da Clínica",
   white_label: "White-Label",
   automacoes: "Automações",
   relatorios: "Relatórios",
@@ -72,6 +74,7 @@ export const PERMISSOES: Record<Cargo, Modulo[]> = {
     "disparador",
     "financeiro",
     "parcelas",
+    "whatsapp",
     "white_label",
     "automacoes",
     "relatorios",
@@ -89,6 +92,7 @@ export const PERMISSOES: Record<Cargo, Modulo[]> = {
     "disparador",
     "financeiro",
     "parcelas",
+    "whatsapp",
     "white_label",
     "automacoes",
     "relatorios",
@@ -134,6 +138,7 @@ export function moduloDaRota(pathname: string): Modulo | null {
     "/disparador": "disparador",
     "/financeiro": "financeiro",
     "/parcelas": "parcelas",
+    "/whatsapp": "whatsapp",
     "/white-label": "white_label",
     "/automacoes": "automacoes",
     "/relatorios": "relatorios",

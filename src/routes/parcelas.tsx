@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { CreditCard, Plus, Loader2, Wallet, CheckCircle2, Clock, AlertTriangle, HandCoins } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ClinicLayout } from "@/components/layouts/clinic-layout";
 import { RequireClinic } from "@/components/require-clinic";
@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import {
   Dialog,
   DialogContent,
@@ -26,6 +27,8 @@ import {
 } from "@/components/ui/select";
 import { listPlanosPagamento, criarPlanoPagamento, registrarPagamentoParcela, cancelarPlano } from "@/lib/supabase/pagamentos";
 import { listPacientes } from "@/lib/supabase/tenants";
+import { useAuth } from "@/lib/auth-context";
+import { getConfigLembrete, salvarConfigLembrete, listarParcelasAVencer, textoLembrete } from "@/lib/supabase/lembretes";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/parcelas")({
@@ -62,9 +65,13 @@ const statusBadge = (status: string) => {
 
 function ParcelasPage() {
   const queryClient = useQueryClient();
+  const { tenantId } = useAuth();
   const [open, setOpen] = useState(false);
   const [openParcela, setOpenParcela] = useState<{ id: string; valor: number } | null>(null);
   const [valorParcela, setValorParcela] = useState("");
+  const [lembreteAtivo, setLembreteAtivo] = useState(false);
+  const [lembreteDias, setLembreteDias] = useState(3);
+  const [aVencer, setAVencer] = useState<Awaited<ReturnType<typeof listarParcelasAVencer>>>([]);
   const [form, setForm] = useState({
     paciente_id: "",
     descricao: "",
@@ -81,6 +88,14 @@ function ParcelasPage() {
     queryFn: listPlanosPagamento,
   });
   const { data: pacientes } = useQuery({ queryKey: ["pacientes"], queryFn: listPacientes });
+
+  useEffect(() => {
+    if (!tenantId) return;
+    getConfigLembrete(tenantId)
+      .then((cfg) => { setLembreteAtivo(cfg.ativo); setLembreteDias(cfg.diasAntes); })
+      .catch((e) => toast.error(String(e)));
+    listarParcelasAVencer(tenantId, 30).then(setAVencer).catch(() => {});
+  }, [tenantId]);
 
   const criarMutation = useMutation({
     mutationFn: () =>
@@ -120,6 +135,15 @@ function ParcelasPage() {
       queryClient.invalidateQueries({ queryKey: ["planos-pagamento"] });
       toast.success("Plano cancelado");
     },
+    onError: (e) => toast.error(String(e)),
+  });
+
+  const salvarLembreteMutation = useMutation({
+    mutationFn: () => {
+      if (!tenantId) throw new Error("Sem clínica");
+      return salvarConfigLembrete(tenantId, lembreteAtivo, lembreteDias);
+    },
+    onSuccess: () => toast.success("Config de lembrete salva"),
     onError: (e) => toast.error(String(e)),
   });
 
@@ -222,6 +246,60 @@ function ParcelasPage() {
             <p className="mt-2 font-display text-2xl font-bold text-foreground">{(planos ?? []).filter((p) => p.status === "ativo").length}</p>
           </Card>
         </div>
+
+        {/* Lembretes de vencimento */}
+        <section className="mt-6">
+          <Card className="border-border/60 p-5">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="h-4 w-4 text-primary" />
+                  <h3 className="text-sm font-bold text-foreground">Lembrete de vencimento via WhatsApp</h3>
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Avisa o paciente automaticamente antes do vencimento da parcela. (Ativa quando a clínica conectar o
+                  número na tela "WhatsApp da Clínica".)
+                </p>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">Avisar</span>
+                  <Input
+                    type="number"
+                    min={1}
+                    max={30}
+                    value={String(lembreteDias)}
+                    onChange={(e) => setLembreteDias(parseInt(e.target.value) || 3)}
+                    className="h-9 w-16 text-center font-mono"
+                    disabled={!lembreteAtivo}
+                  />
+                  <span className="text-xs text-muted-foreground">dias antes</span>
+                </div>
+                <Switch checked={lembreteAtivo} onCheckedChange={setLembreteAtivo} />
+                <Button size="sm" variant="outline" onClick={() => salvarLembreteMutation.mutate()} disabled={salvarLembreteMutation.isPending}>
+                  Salvar
+                </Button>
+              </div>
+            </div>
+
+            {aVencer.length > 0 && (
+              <div className="mt-4 rounded-lg border border-warning/30 bg-warning/5 p-3">
+                <p className="text-xs font-semibold text-warning">📅 {aVencer.length} parcela(s) vencem nos próximos 30 dias:</p>
+                <div className="mt-2 space-y-1">
+                  {aVencer.map((p) => (
+                    <p key={p.parcela_id} className="text-xs text-muted-foreground">
+                      • {p.paciente_nome ?? "Paciente"} — parcela {p.numero} do {p.descricao} em {fmtData(p.vencimento)} ({brl(p.restante)})
+                    </p>
+                  ))}
+                </div>
+                <details className="mt-2">
+                  <summary className="cursor-pointer text-xs font-medium text-primary">Ver texto do lembrete</summary>
+                  <pre className="mt-2 whitespace-pre-wrap rounded bg-muted/40 p-3 text-xs text-foreground">{textoLembrete(aVencer[0])}</pre>
+                </details>
+              </div>
+            )}
+          </Card>
+        </section>
 
         {/* Lista de planos */}
         <section className="mt-8">

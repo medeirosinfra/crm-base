@@ -17,6 +17,8 @@ export interface Tenant {
   mrr?: number | null;
   waha_sessao?: string | null;
   whatsapp_sessions?: number | null;
+  whatsapp_clinica?: string | null;
+  whatsapp_conectado?: boolean | null;
   created_at: string;
 }
 

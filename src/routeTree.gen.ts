@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as WhatsappRouteImport } from './routes/whatsapp'
 import { Route as SetoresRouteImport } from './routes/setores'
 import { Route as RelatoriosRouteImport } from './routes/relatorios'
 import { Route as ProcedimentosRouteImport } from './routes/procedimentos'
@@ -34,6 +35,11 @@ import { Route as MasterBotsRouteImport } from './routes/master/bots'
 import { Route as MasterAutomacoesRouteImport } from './routes/master/automacoes'
 import { Route as MasterAnunciosRouteImport } from './routes/master/anuncios'
 
+const WhatsappRoute = WhatsappRouteImport.update({
+  id: '/whatsapp',
+  path: '/whatsapp',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SetoresRoute = SetoresRouteImport.update({
   id: '/setores',
   path: '/setores',
@@ -171,6 +177,7 @@ export interface FileRoutesByFullPath {
   '/procedimentos': typeof ProcedimentosRoute
   '/relatorios': typeof RelatoriosRoute
   '/setores': typeof SetoresRoute
+  '/whatsapp': typeof WhatsappRoute
   '/master/anuncios': typeof MasterAnunciosRoute
   '/master/automacoes': typeof MasterAutomacoesRoute
   '/master/bots': typeof MasterBotsRoute
@@ -196,6 +203,7 @@ export interface FileRoutesByTo {
   '/procedimentos': typeof ProcedimentosRoute
   '/relatorios': typeof RelatoriosRoute
   '/setores': typeof SetoresRoute
+  '/whatsapp': typeof WhatsappRoute
   '/master/anuncios': typeof MasterAnunciosRoute
   '/master/automacoes': typeof MasterAutomacoesRoute
   '/master/bots': typeof MasterBotsRoute
@@ -223,6 +231,7 @@ export interface FileRoutesById {
   '/procedimentos': typeof ProcedimentosRoute
   '/relatorios': typeof RelatoriosRoute
   '/setores': typeof SetoresRoute
+  '/whatsapp': typeof WhatsappRoute
   '/master/anuncios': typeof MasterAnunciosRoute
   '/master/automacoes': typeof MasterAutomacoesRoute
   '/master/bots': typeof MasterBotsRoute
@@ -251,6 +260,7 @@ export interface FileRouteTypes {
     | '/procedimentos'
     | '/relatorios'
     | '/setores'
+    | '/whatsapp'
     | '/master/anuncios'
     | '/master/automacoes'
     | '/master/bots'
@@ -276,6 +286,7 @@ export interface FileRouteTypes {
     | '/procedimentos'
     | '/relatorios'
     | '/setores'
+    | '/whatsapp'
     | '/master/anuncios'
     | '/master/automacoes'
     | '/master/bots'
@@ -302,6 +313,7 @@ export interface FileRouteTypes {
     | '/procedimentos'
     | '/relatorios'
     | '/setores'
+    | '/whatsapp'
     | '/master/anuncios'
     | '/master/automacoes'
     | '/master/bots'
@@ -329,10 +341,18 @@ export interface RootRouteChildren {
   ProcedimentosRoute: typeof ProcedimentosRoute
   RelatoriosRoute: typeof RelatoriosRoute
   SetoresRoute: typeof SetoresRoute
+  WhatsappRoute: typeof WhatsappRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/whatsapp': {
+      id: '/whatsapp'
+      path: '/whatsapp'
+      fullPath: '/whatsapp'
+      preLoaderRoute: typeof WhatsappRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/setores': {
       id: '/setores'
       path: '/setores'
@@ -557,6 +577,7 @@ const rootRouteChildren: RootRouteChildren = {
   ProcedimentosRoute: ProcedimentosRoute,
   RelatoriosRoute: RelatoriosRoute,
   SetoresRoute: SetoresRoute,
+  WhatsappRoute: WhatsappRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Users, Plus, Loader2, Trash2, Pencil } from "lucide-react";
+import { Users, Plus, Loader2, Trash2, Pencil, Briefcase, BadgeCheck } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ClinicLayout } from "@/components/layouts/clinic-layout";
@@ -8,11 +8,13 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   Select,
@@ -27,6 +29,7 @@ import {
   updateFuncionario,
   deleteFuncionario,
   listSetores,
+  createSetor,
   type Funcionario,
 } from "@/lib/supabase/funcionarios";
 import { toast } from "sonner";
@@ -49,18 +52,38 @@ const CARGO_LABELS: Record<string, string> = {
   staff: "Atendente",
 };
 
+const ESPECIALIDADES = [
+  "Dentista",
+  "Ortodontista",
+  "Dermatologista",
+  "Harmonização Facial",
+  "Fisioterapeuta",
+  "Psicólogo",
+  "Esteticista",
+  "Recepcionista",
+  "Auxiliar",
+  "Outro",
+];
+
 const formInicial = {
   nome: "",
+  cpf: "",
   cargo: "staff",
   setor_id: "",
   telefone: "",
   email: "",
+  especialidade: "",
+  observacoes: "",
+  ativo: true,
 };
 
 function FuncionariosPage() {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState<Funcionario | null>(null);
   const [form, setForm] = useState(formInicial);
+  const [openSetor, setOpenSetor] = useState(false);
+  const [novoSetor, setNovoSetor] = useState("");
 
   const { data: funcionarios, isLoading } = useQuery({
     queryKey: ["funcionarios"],
@@ -68,21 +91,51 @@ function FuncionariosPage() {
   });
   const { data: setores } = useQuery({ queryKey: ["setores"], queryFn: listSetores });
 
-  const set = (campo: keyof typeof form, valor: string) => setForm((f) => ({ ...f, [campo]: valor }));
+  const set = (campo: keyof typeof form, valor: string | boolean) => setForm((f) => ({ ...f, [campo]: valor }));
+
+  const openCriar = () => {
+    setEditing(null);
+    setForm(formInicial);
+    setOpen(true);
+  };
+
+  const openEditar = (f: Funcionario) => {
+    setEditing(f);
+    setForm({
+      nome: f.nome,
+      cpf: f.cpf ?? "",
+      cargo: f.cargo,
+      setor_id: f.setor_id ?? "",
+      telefone: f.telefone ?? "",
+      email: f.email ?? "",
+      especialidade: f.especialidade ?? "",
+      observacoes: f.observacoes ?? "",
+      ativo: f.ativo,
+    });
+    setOpen(true);
+  };
 
   const createMutation = useMutation({
-    mutationFn: () =>
-      createFuncionario({
+    mutationFn: () => {
+      const dados = {
         nome: form.nome,
+        cpf: form.cpf || null,
         cargo: form.cargo as Funcionario["cargo"],
         setor_id: form.setor_id || null,
         telefone: form.telefone || null,
         email: form.email || null,
-        profile_id: null,
-      }),
+        especialidade: form.especialidade || null,
+        observacoes: form.observacoes || null,
+        ativo: form.ativo,
+      };
+      if (editing) {
+        return updateFuncionario(editing.id, dados);
+      }
+      return createFuncionario({ ...dados, profile_id: null });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["funcionarios"] });
-      toast.success("Funcionário criado!");
+      toast.success(editing ? "Funcionário atualizado!" : "Funcionário criado!");
       setOpen(false);
       setForm(formInicial);
     },
@@ -94,6 +147,17 @@ function FuncionariosPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["funcionarios"] });
       toast.success("Funcionário removido");
+    },
+    onError: (e) => toast.error(String(e)),
+  });
+
+  const criarSetorMutation = useMutation({
+    mutationFn: () => createSetor({ nome: novoSetor }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["setores"] });
+      toast.success("Setor criado!");
+      setOpenSetor(false);
+      setNovoSetor("");
     },
     onError: (e) => toast.error(String(e)),
   });
@@ -121,50 +185,105 @@ function FuncionariosPage() {
           </div>
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-              <Button size="lg" className="gradient-primary shadow-glow font-semibold">
+              <Button size="lg" className="gradient-primary shadow-glow font-semibold" onClick={openCriar}>
                 <Plus className="mr-1.5 h-4 w-4" /> Novo Funcionário
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-md">
-              <DialogHeader><DialogTitle>Novo funcionário</DialogTitle></DialogHeader>
+            <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+              <DialogHeader><DialogTitle>{editing ? "Editar funcionário" : "Novo funcionário"}</DialogTitle></DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <Label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Nome *</Label>
-                  <Input value={form.nome} onChange={(e) => set("nome", e.target.value)} className="mt-1.5 h-11" required />
-                </div>
-                <div>
-                  <Label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Cargo</Label>
-                  <Select value={form.cargo} onValueChange={(v) => set("cargo", v)}>
-                    <SelectTrigger className="mt-1.5 h-11"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {Object.entries(CARGO_LABELS).map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Setor</Label>
-                  <Select value={form.setor_id} onValueChange={(v) => set("setor_id", v)}>
-                    <SelectTrigger className="mt-1.5 h-11"><SelectValue placeholder="Selecione..." /></SelectTrigger>
-                    <SelectContent>
-                      {(setores ?? []).map((s) => <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Telefone</Label>
-                    <Input value={form.telefone} onChange={(e) => set("telefone", e.target.value)} className="mt-1.5 h-11" />
-                  </div>
-                  <div>
-                    <Label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Email</Label>
-                    <Input type="email" value={form.email} onChange={(e) => set("email", e.target.value)} className="mt-1.5 h-11" />
+                  <Label className="text-xs font-semibold uppercase tracking-widest text-primary">Identificação</Label>
+                  <div className="mt-2 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div className="sm:col-span-2">
+                      <Input value={form.nome} onChange={(e) => set("nome", e.target.value)} placeholder="Nome completo *" className="h-11" required />
+                    </div>
+                    <div>
+                      <Input value={form.cpf} onChange={(e) => set("cpf", e.target.value)} placeholder="CPF" className="h-11 font-mono" />
+                    </div>
+                    <div>
+                      <Input type="email" value={form.email} onChange={(e) => set("email", e.target.value)} placeholder="E-mail" className="h-11" />
+                    </div>
                   </div>
                 </div>
+
+                <div className="border-t border-border/60 pt-4">
+                  <Label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Função</Label>
+                  <div className="mt-2 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div>
+                      <Label className="text-[11px] text-muted-foreground">Cargo</Label>
+                      <Select value={form.cargo} onValueChange={(v) => set("cargo", v)}>
+                        <SelectTrigger className="mt-1 h-11"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {Object.entries(CARGO_LABELS).map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label className="text-[11px] text-muted-foreground">Especialidade / Área</Label>
+                      <Select value={form.especialidade} onValueChange={(v) => set("especialidade", v)}>
+                        <SelectTrigger className="mt-1 h-11"><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                        <SelectContent>
+                          {ESPECIALIDADES.map((e) => <SelectItem key={e} value={e}>{e}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="sm:col-span-2">
+                      <Label className="text-[11px] text-muted-foreground">Setor</Label>
+                      <div className="mt-1 flex gap-2">
+                        <Select value={form.setor_id} onValueChange={(v) => set("setor_id", v)}>
+                          <SelectTrigger className="h-11 flex-1"><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                          <SelectContent>
+                            {(setores ?? []).map((s) => <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                        <Button type="button" variant="outline" className="h-11" onClick={() => setOpenSetor(true)}>
+                          <Briefcase className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="border-t border-border/60 pt-4">
+                  <Label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Contato</Label>
+                  <div className="mt-2 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div>
+                      <Input value={form.telefone} onChange={(e) => set("telefone", e.target.value)} placeholder="Telefone (com DDD)" className="h-11 font-mono" />
+                    </div>
+                    <div>
+                      <Input value={form.observacoes} onChange={(e) => set("observacoes", e.target.value)} placeholder="Observações" className="h-11" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between rounded-lg border border-border/60 p-3">
+                  <div className="flex items-center gap-2">
+                    <BadgeCheck className="h-4 w-4 text-success" />
+                    <span className="text-sm font-medium text-foreground">Ativo na equipe</span>
+                  </div>
+                  <Switch checked={form.ativo} onCheckedChange={(v) => set("ativo", v)} />
+                </div>
+
                 <Button type="submit" disabled={createMutation.isPending} className="gradient-primary w-full font-semibold">
                   {createMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Plus className="mr-2 h-4 w-4" />}
-                  Salvar
+                  {editing ? "Salvar alterações" : "Cadastrar funcionário"}
                 </Button>
               </form>
+            </DialogContent>
+          </Dialog>
+
+          {/* Dialog criar setor */}
+          <Dialog open={openSetor} onOpenChange={setOpenSetor}>
+            <DialogContent className="sm:max-w-sm">
+              <DialogHeader><DialogTitle>Novo setor</DialogTitle></DialogHeader>
+              <div className="space-y-4">
+                <Input value={novoSetor} onChange={(e) => setNovoSetor(e.target.value)} placeholder="Nome do setor (ex: Recepção)" className="h-11" />
+                <Button onClick={() => criarSetorMutation.mutate()} disabled={!novoSetor.trim() || criarSetorMutation.isPending} className="gradient-primary w-full font-semibold">
+                  {criarSetorMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Plus className="mr-2 h-4 w-4" />}
+                  Criar setor
+                </Button>
+              </div>
             </DialogContent>
           </Dialog>
         </header>
@@ -191,17 +310,30 @@ function FuncionariosPage() {
                         <h3 className="font-display text-base font-bold text-foreground">{f.nome}</h3>
                         <p className="text-[11px] text-muted-foreground">
                           {CARGO_LABELS[f.cargo] ?? f.cargo}
+                          {f.especialidade ? ` · ${f.especialidade}` : ""}
                           {f.setor?.nome ? ` · ${f.setor.nome}` : ""}
                         </p>
                       </div>
                     </div>
-                    <button
-                      onClick={() => { if (confirm(`Remover ${f.nome}?`)) deleteMutation.mutate(f.id); }}
-                      aria-label="Excluir"
-                      className="grid h-8 w-8 place-items-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
+                    <div className="flex items-center gap-1">
+                      {!f.ativo && (
+                        <span className="rounded-full border border-border/40 px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">Inativo</span>
+                      )}
+                      <button
+                        onClick={() => openEditar(f)}
+                        aria-label="Editar"
+                        className="grid h-8 w-8 place-items-center rounded-md text-muted-foreground hover:bg-primary/10 hover:text-primary"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => { if (confirm(`Remover ${f.nome}?`)) deleteMutation.mutate(f.id); }}
+                        aria-label="Excluir"
+                        className="grid h-8 w-8 place-items-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
                   </div>
                   {f.email && <p className="mt-3 text-xs text-muted-foreground">{f.email}</p>}
                   {f.telefone && <p className="mt-1 text-xs text-muted-foreground">{f.telefone}</p>}
