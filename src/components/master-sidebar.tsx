@@ -29,7 +29,7 @@ import { useAuth } from "@/lib/auth-context";
 
 const masterNav = [
   { titulo: "Visão do Ecossistema", url: "/master", icon: LayoutDashboard },
-  { titulo: "Gestão de Clínicas", url: "/master/clinicas", icon: Stethoscope },
+  { titulo: "Clientes", url: "/master/clinicas", icon: Stethoscope },
   { titulo: "Segmentos & Módulos", url: "/master/segmentos", icon: Building2 },
 ];
 

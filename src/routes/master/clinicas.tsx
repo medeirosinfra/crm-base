@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Plus, Search, MessageCircle, Loader2, Pencil, Trash2, KeyRound } from "lucide-react";
+import { Plus, Search, MessageCircle, Loader2, Pencil, Trash2, KeyRound, Building2, CheckCircle2, Hourglass, CircleDollarSign, Sparkles } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
@@ -41,6 +41,9 @@ const statusLabels: Record<Tenant["status"], { label: string; className: string 
   inadimplente: { label: "Inadimplente", className: "bg-warning/15 text-warning border-warning/30" },
   suspensa: { label: "Suspensa", className: "bg-destructive/15 text-destructive border-destructive/30" },
 };
+
+const brl = (v: number) =>
+  new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
 
 const ESPECIALIDADES = ["Harmonização Facial", "Odontologia", "Dermatologia", "Fisioterapia", "Psicologia"];
 const PLANOS = ["starter", "pro", "empresarial"];
@@ -160,19 +163,69 @@ function ClinicasMaster() {
       <header className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-widest text-primary">Painel Master</p>
-          <h1 className="mt-1 font-display text-3xl font-bold text-foreground sm:text-4xl">Gestão de Clínicas</h1>
+          <h1 className="mt-1 font-display text-3xl font-bold text-foreground sm:text-4xl">Clientes</h1>
           <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-            Cadastre as clínicas white-label da plataforma. Cada clínica terá seu painel com admin próprio.
+            Gerencie as clínicas white-label da plataforma. Cada cliente recebe um painel próprio com admin automático.
           </p>
         </div>
         <Button size="lg" onClick={openCriar} className="gradient-primary shadow-glow font-semibold">
-          <Plus className="mr-1.5 h-4 w-4" /> Cadastrar Nova Clínica
+          <Plus className="mr-1.5 h-4 w-4" /> Novo Cliente
         </Button>
       </header>
 
-      <div className="mt-8 relative flex-1 max-w-md">
+      {/* KPIs do negócio */}
+      <div className="mt-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <Card className="border-border/60 p-5">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <Building2 className="h-4 w-4 text-primary" /> Total de clientes
+          </div>
+          <p className="mt-2 font-display text-2xl font-bold text-foreground">{(tenants ?? []).length}</p>
+        </Card>
+        <Card className="border-border/60 p-5">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <CheckCircle2 className="h-4 w-4 text-success" /> Ativos
+          </div>
+          <p className="mt-2 font-display text-2xl font-bold text-success">{(tenants ?? []).filter((t) => t.status === "ativa").length}</p>
+        </Card>
+        <Card className="border-border/60 p-5">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <Hourglass className="h-4 w-4 text-warning" /> Em trial
+          </div>
+          <p className="mt-2 font-display text-2xl font-bold text-warning">{(tenants ?? []).filter((t) => t.status === "trial").length}</p>
+        </Card>
+        <Card className="border-border/60 p-5">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <CircleDollarSign className="h-4 w-4 text-primary" /> MRR estimado
+          </div>
+          <p className="mt-2 font-display text-2xl font-bold text-foreground">{brl((tenants ?? []).reduce((s, t) => s + (Number(t.mrr) || 0), 0))}</p>
+        </Card>
+      </div>
+
+      {/* Guia rápido de uso */}
+      <section className="mt-6 rounded-xl border border-primary/20 bg-primary/5 p-5">
+        <div className="flex items-center gap-2">
+          <Sparkles className="h-4 w-4 text-primary" />
+          <h3 className="text-sm font-bold text-foreground">Como criar um cliente em 3 passos</h3>
+        </div>
+        <div className="mt-3 grid gap-3 text-sm text-muted-foreground sm:grid-cols-3">
+          <div className="flex gap-2">
+            <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-primary text-[11px] font-bold text-primary-foreground">1</span>
+            <span>Clique em <strong className="text-foreground">"Novo Cliente"</strong> acima</span>
+          </div>
+          <div className="flex gap-2">
+            <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-primary text-[11px] font-bold text-primary-foreground">2</span>
+            <span>Preencha nome, segmento e <strong className="text-foreground">login do admin</strong> da clínica</span>
+          </div>
+          <div className="flex gap-2">
+            <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-primary text-[11px] font-bold text-primary-foreground">3</span>
+            <span>Entregue as <strong className="text-foreground">credenciais</strong> à dona — ela acessa o painel da clínica</span>
+          </div>
+        </div>
+      </section>
+
+      <div className="mt-6 relative flex-1 max-w-md">
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar clínica..." className="h-11 border-border/60 bg-card pl-9 text-sm" />
+        <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar cliente..." className="h-11 border-border/60 bg-card pl-9 text-sm" />
       </div>
 
       <section className="mt-6">
@@ -181,7 +234,7 @@ function ClinicasMaster() {
         ) : (
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
             {(tenants ?? []).length === 0 && (
-              <div className="col-span-full py-16 text-center text-muted-foreground">Nenhuma clínica cadastrada.</div>
+              <div className="col-span-full py-16 text-center text-muted-foreground">Nenhum cliente cadastrado.</div>
             )}
             {filtered.map((c) => {
               const status = statusLabels[c.status];
@@ -189,7 +242,7 @@ function ClinicasMaster() {
                 <Card key={c.id} className="group gradient-surface shadow-card relative flex flex-col border-border/60 p-5 transition-all hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-glow">
                   <div className="flex items-start justify-between">
                     <span className="inline-flex items-center rounded-md px-2.5 py-1 text-[11px] font-semibold bg-primary/15 text-primary">
-                      {c.especialidade ?? "Clínica"}
+                      {c.especialidade ?? "Cliente"}
                     </span>
                     <div className="flex items-center gap-1">
                       <button onClick={() => openEditar(c)} aria-label="Editar" className="grid h-7 w-7 place-items-center rounded-md text-muted-foreground opacity-0 transition-opacity hover:bg-primary/10 hover:text-primary group-hover:opacity-100">
