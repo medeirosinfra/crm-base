@@ -16,6 +16,7 @@ export interface CreateClinicInput {
   adminSenha: string;
   corPrimaria?: string;
   plano?: string;
+  wahaSessao?: string;
 }
 
 export const createClinicWithAdmin = createServerFn({ method: "POST" })
@@ -32,6 +33,7 @@ export const createClinicWithAdmin = createServerFn({ method: "POST" })
         plano: data.plano ?? "starter",
         status: "ativa",
         ativo: true,
+        waha_sessao: data.wahaSessao ?? null,
       })
       .select()
       .single();

@@ -31,3 +31,6 @@ dist-ssr
 *.sln
 *.sw?
 .env
+
+# Migrações locais aplicadas (rastreamento)
+database/.applied/

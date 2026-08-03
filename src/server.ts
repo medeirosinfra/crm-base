@@ -25,14 +25,42 @@ interface WahaPayload {
   fromMe?: boolean;
 }
 
-async function encontrarBotWaha(texto: string) {
+async function encontrarBotWaha(texto: string, sessao?: string) {
   const textoLower = texto.toLowerCase();
-  const { data: bots } = await supabaseAdmin.from("bots").select("*").eq("ativo", true);
-  const porKeyword = (bots ?? []).find(
+
+  // Resolve a clínica (tenant) pela sessão WAHA. Se não achar, usa bots do master.
+  let tenantId: string | null = null;
+  if (sessao) {
+    const { data: tenant } = await supabaseAdmin
+      .from("tenants")
+      .select("id")
+      .eq("waha_sessao", sessao)
+      .eq("status", "ativa")
+      .maybeSingle();
+    tenantId = tenant?.id ?? null;
+  }
+
+  // Bots candidatos: do tenant (se resolvido) + bots do master (tenant_id NULL)
+  let query = supabaseAdmin.from("bots").select("*").eq("ativo", true);
+  if (tenantId) {
+    query = query.or(`tenant_id.eq.${tenantId},tenant_id.is.null`);
+  } else {
+    query = query.is("tenant_id", null);
+  }
+  const { data: bots } = await query;
+
+  // Prioridade: bot do tenant com keyword que bate → master com keyword → geral do tenant → geral do master
+  const ordenados = (bots ?? []).sort((a, b) => {
+    const aTenant = a.tenant_id ? 1 : 0;
+    const bTenant = b.tenant_id ? 1 : 0;
+    return bTenant - aTenant; // tenant primeiro
+  });
+
+  const porKeyword = ordenados.find(
     (b) => b.keyword && textoLower.includes(String(b.keyword).toLowerCase()),
   );
   if (porKeyword) return porKeyword;
-  return (bots ?? []).find((b) => !b.keyword) ?? null;
+  return ordenados.find((b) => !b.keyword) ?? null;
 }
 
 async function handleWahaWebhook(request: Request): Promise<Response> {
@@ -54,7 +82,7 @@ async function handleWahaWebhook(request: Request): Promise<Response> {
       });
     }
 
-    const bot = await encontrarBotWaha(texto);
+    const bot = await encontrarBotWaha(texto, session);
     if (!bot) {
       return new Response(JSON.stringify({ responded: false, motivo: "sem_bot" }), {
         headers: { "content-type": "application/json" },

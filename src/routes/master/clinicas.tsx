@@ -53,6 +53,7 @@ const formInicial = {
   plano: "starter" as Tenant["plano"],
   descricao: "",
   cor_primaria: "#e11d48",
+  waha_sessao: "",
   // Campos do admin automático
   adminNome: "",
   adminEmail: "",
@@ -88,6 +89,7 @@ function ClinicasMaster() {
       plano: t.plano,
       descricao: t.descricao ?? "",
       cor_primaria: t.cor_primaria,
+      waha_sessao: t.waha_sessao ?? "",
       adminNome: "",
       adminEmail: "",
       adminSenha: "",
@@ -105,6 +107,7 @@ function ClinicasMaster() {
           plano: form.plano,
           descricao: form.descricao || null,
           cor_primaria: form.cor_primaria,
+          waha_sessao: form.waha_sessao || null,
         });
       }
       // Criação com admin automático via server function
@@ -117,6 +120,7 @@ function ClinicasMaster() {
         adminSenha: form.adminSenha,
         corPrimaria: form.cor_primaria,
         plano: form.plano,
+        wahaSessao: form.waha_sessao || undefined,
       });
       return result;
     },
@@ -257,6 +261,15 @@ function ClinicasMaster() {
             <div>
               <Label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Descrição</Label>
               <Input value={form.descricao} onChange={(e) => set("descricao", e.target.value)} className="mt-1.5 h-11" />
+            </div>
+            <div>
+              <Label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                Sessão WhatsApp (WAHA)
+              </Label>
+              <Input value={form.waha_sessao} onChange={(e) => set("waha_sessao", e.target.value)} placeholder="ex: clinica_dra_luana" className="mt-1.5 h-11 font-mono text-sm" />
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                Nome da sessão WAHA da clínica. As mensagens desta sessão são atendidas pelos bots desta clínica.
+              </p>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
