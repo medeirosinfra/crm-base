@@ -162,6 +162,14 @@ CRM SaaS **white-label multi-tenant** para clínicas: 1 código, N clínicas, ca
 - Módulos `whatsapp` adicionados a segmentos e permissões
 - **Testado**: salvar número, config lembrete, detectar parcela a vencer, criar funcionário com todos campos
 
+### 📋 MÓDULO PRONTUÁRIO DO PACIENTE (03/08) — `70e4b23`
+- **Migration 017**: campos estruturados em `prontuario_registros` (data, procedimento realizado, medicação, receita, período início/fim, retorno) + tipo `medicacao` na constraint
+- **Página `/prontuario`**: seleciona paciente, timeline de registros, form completo por tipo (procedimento / medicação / retorno / avaliação / evolução)
+- **Service** expandido: listar (com profissional), criar, atualizar, excluir
+- Módulo `prontuario` no banco, 5 segmentos e permissões
+- **Testado**: criar registro de procedimento e medicação via API
+- ⚠️ **Lição**: adicionar novo tipo exige atualizar CHECK constraint da tabela
+
 ### Infra/migrações
 - Descoberto: banco principal é `supabase` (tabelas completas). `crm_base` é órfão
 - 10 migrations já aplicadas; marcadas como `.applied` para `migrate.sh` parar de tentar reaplicar
