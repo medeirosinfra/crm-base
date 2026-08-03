@@ -8,7 +8,7 @@
 1. **Ler este ESTRATEGIA.md** — visão, decisões, roadmap
 2. **Ler PROGRESS.md** — estado exato do que está pronto
 3. **Verificar servidor**: `docker ps` (medeirosinfra-suite Up, waha WORKING, supabase healthy)
-4. **PENDÊNCIA CRÍTICA**: bot integrado ao WhatsApp está **funcionando e testado mas NÃO publicado no GitHub** — aguardando autorização do dono para fazer push
+4. ✅ Bot publicado no GitHub (03/08) — commit `7bc1533`; bot por clínica (`0aa8fc5`) e DRE (`25ceaca`) também publicados
 5. Continuar do "PRÓXIMOS PASSOS" no PROGRESS.md
 
 ---
@@ -88,12 +88,12 @@ Criar uma **linha de produtos SaaS white-label** para revenda, cada um focado nu
   - **Funcionários** (`/funcionarios`) e **Setores** (`/setores`): admin da clínica gerencia equipe
 - ✅ **Roles & Permissões (RBAC)** — matriz de cargos × módulos
 - ✅ **Sistema de Harmonização Facial** (migration 007): 15 procedimentos, 4 profissionais, anamnese + prontuário
-- ✅ **BOT INTEGRADO AO WHATSAPP** (04/08) — ⚠️ NÃO PUBLICADO:
+- ✅ **BOT INTEGRADO AO WHATSAPP** (04/08) — ✅ PUBLICADO 03/08 (`7bc1533`):
   - Webhook `/webhook/waha` no `src/server.ts` — URL estável que o WAHA chama
   - WAHA → `https://crm.medeirossolucoestech.com.br/webhook/waha` → consulta bots → responde via WAHA
   - Tabela `bots` (migration 010) + service `bots.ts` + página `/master/bots`
   - **Testado**: bot "Atendente Master" responde de verdade
-  - **PENDENTE**: fazer push no GitHub (aguardando autorização do dono)
+  - ✅ **Bot por clínica** (`0aa8fc5`): resolve tenant pela `waha_sessao`, precedência tenant > master
 - ✅ **FERRAMENTAS DO MASTER** (04/08):
   - **Disparos em Massa** (`/master/disparos`): envio de WhatsApp em massa para contatos de todas as clínicas (WAHA)
   - **Anúncios** (`/master/anuncios`): CRUD de anúncios para redes sociais com agendamento

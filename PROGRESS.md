@@ -65,26 +65,51 @@ CRM SaaS **white-label multi-tenant** para clínicas: 1 código, N clínicas, ca
 
 | # | Item | Status |
 |---|---|---|
-| 1 | **PUBLICAR bot integrado no GitHub** | ⏳ AGUARDANDO DONO — código testado, falta push |
+| 1 | **PUBLICAR bot integrado no GitHub** | ✅ **FEITO 03/08** — commit `7bc1533` |
 | 2 | Criar bot específico de botox/preenchimento (keyword + resposta) | ⏳ testar resposta real |
-| 3 | Bot por clínica (cada clínica seu bot) | ⏳ |
-| 4 | Financeiro detalhado (DRE completo) | ⏳ |
+| 3 | Bot por clínica (cada clínica seu bot) | ✅ **FEITO 03/08** — resolve tenant pela `waha_sessao` |
+| 4 | Financeiro detalhado (DRE completo) | ✅ **FEITO 03/08** — `calcularDre` + abas por categoria/mês |
 | 5 | Campanhas com disparo real (fila + relatório) | ⏳ |
 | 6 | Anúncios com integração real (redes sociais) | ⏳ estado local hoje |
 | 7 | Subdomínio por clínica (DNS wildcard) | ⏳ |
 | 8 | Testes automatizados (Vitest) | ⏳ |
 | 9 | Screenshots no README do GitHub | ⏳ |
 
+## ✅ FEITO em 03/08 (retomada)
+
+### Bot publicado no GitHub (autorização do dono concedida)
+- Push `7bc1533` no repo público `medeirosinfra/crm-base` (webhook + migration 010 + service bots.ts)
+- **Segurança**: credenciais de admin sanitizadas dos docs (agora em env vars — repo é público)
+- Removidos 2 arquivos de webhook mortos/duplicados (`server/routes/webhook/waha.ts`, `src/server-functions/waha-webhook.ts`)
+- Identidade git configurada (`medeirosinfra`)
+- Remote corrigido p/ `crm-base` (apontava p/ `crm-clinica-white-label`)
+
+### Bot por clínica (commit `0aa8fc5`)
+- Webhook resolve o tenant pela `waha_sessao` da mensagem e filtra bots da clínica
+- Precedência: keyword do tenant → geral do tenant → bot master (fallback)
+- Form de clínicas ganhou campo "Sessão WhatsApp (WAHA)" (criação + edição)
+- **Testado**: sessão Odonto + "ortodontia" → `Bot Odonto`; geral → `Atendente Odonto Geral`; fallback → `Atendente Master`
+
+### Financeiro DRE completo (commit `25ceaca`)
+- `calcularDre()`: agrega por categoria e mês, calcula resultado e margem
+- Página `/financeiro`: seção DRE com abas "Por categoria" e "Por mês" (barras)
+- Testado com dados de exemplo: receitas 2880 / despesas 2000 / resultado 880 / margem 30.6%
+
+### Infra/migrações
+- Descoberto: banco principal é `supabase` (tabelas completas). `crm_base` é órfão
+- 10 migrations já aplicadas; marcadas como `.applied` para `migrate.sh` parar de tentar reaplicar
+- Tem infra local de WestCam lista de 3110 revalidada (todos containers healthy)
+
 ## ✅ Feito até agora (04/08)
 
-### Bot integrado ao WhatsApp (NÃO publicado ainda)
+### Bot integrado ao WhatsApp (✅ PUBLICADO 03/08)
 - **Webhook `/webhook/waha`** no `src/server.ts` (intercepta POST antes do router)
 - WAHA aponta para `https://crm.medeirossolucoestech.com.br/webhook/waha`
 - Fluxo: WhatsApp → WAHA → nosso webhook → consulta bots → responde via WAHA
 - **Testado**: `{"responded":true,"bot":"Atendente Master"}`
 - Tabela `bots` (migration 010) + service `bots.ts`
 - Página `/master/bots` para criar bots (keyword + resposta)
-- ⚠️ **NÃO fez push no GitHub** — aguardando autorização do dono
+- ✅ Publicado no GitHub (`7bc1533`) + **bot por clínica** (`0aa8fc5`)
 
 ### Ferramentas do Master (04/08)
 - `/master/disparos`: envio WhatsApp em massa (WAHA) para contatos de todas as clínicas
