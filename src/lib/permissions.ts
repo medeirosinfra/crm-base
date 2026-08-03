@@ -29,7 +29,9 @@ export type Modulo =
   | "financeiro"
   | "white_label"
   | "automacoes"
-  | "relatorios";
+  | "relatorios"
+  | "funcionarios"
+  | "setores";
 
 export const MODULO_LABELS: Record<Modulo, string> = {
   dashboard: "Dashboard",
@@ -45,6 +47,8 @@ export const MODULO_LABELS: Record<Modulo, string> = {
   white_label: "White-Label",
   automacoes: "Automações",
   relatorios: "Relatórios",
+  funcionarios: "Funcionários",
+  setores: "Setores",
 };
 
 // Mapa de permissões por cargo.
@@ -68,6 +72,8 @@ export const PERMISSOES: Record<Cargo, Modulo[]> = {
     "white_label",
     "automacoes",
     "relatorios",
+    "funcionarios",
+    "setores",
   ],
   admin: [
     "dashboard",
@@ -82,6 +88,8 @@ export const PERMISSOES: Record<Cargo, Modulo[]> = {
     "white_label",
     "automacoes",
     "relatorios",
+    "funcionarios",
+    "setores",
   ],
   gerente: [
     "dashboard",
@@ -94,6 +102,7 @@ export const PERMISSOES: Record<Cargo, Modulo[]> = {
     "disparador",
     "financeiro",
     "relatorios",
+    "funcionarios",
   ],
   financeiro: ["dashboard", "financeiro", "relatorios", "pacientes"],
   staff: ["dashboard", "agenda", "pacientes", "anamnese", "contatos", "disparador"],

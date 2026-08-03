@@ -9,11 +9,13 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SetoresRouteImport } from './routes/setores'
 import { Route as RelatoriosRouteImport } from './routes/relatorios'
 import { Route as ProcedimentosRouteImport } from './routes/procedimentos'
 import { Route as PacientesRouteImport } from './routes/pacientes'
 import { Route as MasterRouteImport } from './routes/master'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as FuncionariosRouteImport } from './routes/funcionarios'
 import { Route as FinanceiroRouteImport } from './routes/financeiro'
 import { Route as DisparadorRouteImport } from './routes/disparador'
 import { Route as ContatosRouteImport } from './routes/contatos'
@@ -27,6 +29,11 @@ import { Route as MasterWhiteLabelRouteImport } from './routes/master/white-labe
 import { Route as MasterClinicasRouteImport } from './routes/master/clinicas'
 import { Route as MasterAutomacoesRouteImport } from './routes/master/automacoes'
 
+const SetoresRoute = SetoresRouteImport.update({
+  id: '/setores',
+  path: '/setores',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RelatoriosRoute = RelatoriosRouteImport.update({
   id: '/relatorios',
   path: '/relatorios',
@@ -50,6 +57,11 @@ const MasterRoute = MasterRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FuncionariosRoute = FuncionariosRouteImport.update({
+  id: '/funcionarios',
+  path: '/funcionarios',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FinanceiroRoute = FinanceiroRouteImport.update({
@@ -121,11 +133,13 @@ export interface FileRoutesByFullPath {
   '/contatos': typeof ContatosRoute
   '/disparador': typeof DisparadorRoute
   '/financeiro': typeof FinanceiroRoute
+  '/funcionarios': typeof FuncionariosRoute
   '/login': typeof LoginRoute
   '/master': typeof MasterRouteWithChildren
   '/pacientes': typeof PacientesRouteWithChildren
   '/procedimentos': typeof ProcedimentosRoute
   '/relatorios': typeof RelatoriosRoute
+  '/setores': typeof SetoresRoute
   '/master/automacoes': typeof MasterAutomacoesRoute
   '/master/clinicas': typeof MasterClinicasRoute
   '/master/white-label': typeof MasterWhiteLabelRoute
@@ -140,10 +154,12 @@ export interface FileRoutesByTo {
   '/contatos': typeof ContatosRoute
   '/disparador': typeof DisparadorRoute
   '/financeiro': typeof FinanceiroRoute
+  '/funcionarios': typeof FuncionariosRoute
   '/login': typeof LoginRoute
   '/pacientes': typeof PacientesRouteWithChildren
   '/procedimentos': typeof ProcedimentosRoute
   '/relatorios': typeof RelatoriosRoute
+  '/setores': typeof SetoresRoute
   '/master/automacoes': typeof MasterAutomacoesRoute
   '/master/clinicas': typeof MasterClinicasRoute
   '/master/white-label': typeof MasterWhiteLabelRoute
@@ -159,11 +175,13 @@ export interface FileRoutesById {
   '/contatos': typeof ContatosRoute
   '/disparador': typeof DisparadorRoute
   '/financeiro': typeof FinanceiroRoute
+  '/funcionarios': typeof FuncionariosRoute
   '/login': typeof LoginRoute
   '/master': typeof MasterRouteWithChildren
   '/pacientes': typeof PacientesRouteWithChildren
   '/procedimentos': typeof ProcedimentosRoute
   '/relatorios': typeof RelatoriosRoute
+  '/setores': typeof SetoresRoute
   '/master/automacoes': typeof MasterAutomacoesRoute
   '/master/clinicas': typeof MasterClinicasRoute
   '/master/white-label': typeof MasterWhiteLabelRoute
@@ -180,11 +198,13 @@ export interface FileRouteTypes {
     | '/contatos'
     | '/disparador'
     | '/financeiro'
+    | '/funcionarios'
     | '/login'
     | '/master'
     | '/pacientes'
     | '/procedimentos'
     | '/relatorios'
+    | '/setores'
     | '/master/automacoes'
     | '/master/clinicas'
     | '/master/white-label'
@@ -199,10 +219,12 @@ export interface FileRouteTypes {
     | '/contatos'
     | '/disparador'
     | '/financeiro'
+    | '/funcionarios'
     | '/login'
     | '/pacientes'
     | '/procedimentos'
     | '/relatorios'
+    | '/setores'
     | '/master/automacoes'
     | '/master/clinicas'
     | '/master/white-label'
@@ -217,11 +239,13 @@ export interface FileRouteTypes {
     | '/contatos'
     | '/disparador'
     | '/financeiro'
+    | '/funcionarios'
     | '/login'
     | '/master'
     | '/pacientes'
     | '/procedimentos'
     | '/relatorios'
+    | '/setores'
     | '/master/automacoes'
     | '/master/clinicas'
     | '/master/white-label'
@@ -237,15 +261,24 @@ export interface RootRouteChildren {
   ContatosRoute: typeof ContatosRoute
   DisparadorRoute: typeof DisparadorRoute
   FinanceiroRoute: typeof FinanceiroRoute
+  FuncionariosRoute: typeof FuncionariosRoute
   LoginRoute: typeof LoginRoute
   MasterRoute: typeof MasterRouteWithChildren
   PacientesRoute: typeof PacientesRouteWithChildren
   ProcedimentosRoute: typeof ProcedimentosRoute
   RelatoriosRoute: typeof RelatoriosRoute
+  SetoresRoute: typeof SetoresRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/setores': {
+      id: '/setores'
+      path: '/setores'
+      fullPath: '/setores'
+      preLoaderRoute: typeof SetoresRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/relatorios': {
       id: '/relatorios'
       path: '/relatorios'
@@ -279,6 +312,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/funcionarios': {
+      id: '/funcionarios'
+      path: '/funcionarios'
+      fullPath: '/funcionarios'
+      preLoaderRoute: typeof FuncionariosRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/financeiro': {
@@ -405,11 +445,13 @@ const rootRouteChildren: RootRouteChildren = {
   ContatosRoute: ContatosRoute,
   DisparadorRoute: DisparadorRoute,
   FinanceiroRoute: FinanceiroRoute,
+  FuncionariosRoute: FuncionariosRoute,
   LoginRoute: LoginRoute,
   MasterRoute: MasterRouteWithChildren,
   PacientesRoute: PacientesRouteWithChildren,
   ProcedimentosRoute: ProcedimentosRoute,
   RelatoriosRoute: RelatoriosRoute,
+  SetoresRoute: SetoresRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
