@@ -35,6 +35,10 @@ export function applyTenantTheme(theme: TenantTheme | null) {
   root.style.setProperty("--primary-glow", `rgba(${rgb}, 0.6)`);
   root.style.setProperty("--ring", primary);
 
+  // Gradiente e glow derivados da cor do tenant (antes eram fixos no master)
+  root.style.setProperty("--gradient-primary", `linear-gradient(135deg, ${primary}, ${secondary})`);
+  root.style.setProperty("--shadow-glow", `0 8px 32px -8px rgba(${rgb}, 0.45)`);
+
   // Marca o tema ativo (útil para debug)
   root.setAttribute("data-tenant-theme", theme?.corPrimaria ? "custom" : "default");
 }
