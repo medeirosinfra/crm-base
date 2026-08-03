@@ -32,10 +32,26 @@ export const Route = createFileRoute("/pacientes")({
 function PacientesPage() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
-  const [nome, setNome] = useState("");
-  const [telefone, setTelefone] = useState("");
-  const [email, setEmail] = useState("");
   const [open, setOpen] = useState(false);
+  const [form, setForm] = useState({
+    nome: "",
+    cpf: "",
+    rg: "",
+    nascimento: "",
+    genero: "",
+    telefone: "",
+    email: "",
+    endereco: "",
+    instagram: "",
+    facebook: "",
+    observacoes: "",
+  });
+  const set = (campo: keyof typeof form, valor: string) => setForm((f) => ({ ...f, [campo]: valor }));
+  const limparForm = () =>
+    setForm({
+      nome: "", cpf: "", rg: "", nascimento: "", genero: "",
+      telefone: "", email: "", endereco: "", instagram: "", facebook: "", observacoes: "",
+    });
 
   const { data: pacientes, isLoading } = useQuery({
     queryKey: ["pacientes"],
@@ -45,18 +61,22 @@ function PacientesPage() {
   const createMutation = useMutation({
     mutationFn: () =>
       createPaciente({
-        nome,
-        telefone: telefone || null,
-        email: email || null,
-        nascimento: null,
-        observacoes: null,
+        nome: form.nome,
+        cpf: form.cpf || null,
+        rg: form.rg || null,
+        nascimento: form.nascimento || null,
+        genero: form.genero || null,
+        telefone: form.telefone || null,
+        email: form.email || null,
+        endereco: form.endereco || null,
+        instagram: form.instagram || null,
+        facebook: form.facebook || null,
+        observacoes: form.observacoes || null,
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["pacientes"] });
       toast.success("Paciente cadastrado!");
-      setNome("");
-      setTelefone("");
-      setEmail("");
+      limparForm();
       setOpen(false);
     },
     onError: (e) => toast.error(String(e)),
@@ -88,26 +108,71 @@ function PacientesPage() {
                 Novo Paciente
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-md">
+            <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Novo paciente</DialogTitle>
               </DialogHeader>
               <div className="space-y-4">
+                {/* Identificação */}
                 <div>
-                  <Label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Nome</Label>
-                  <Input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Nome completo" className="mt-1.5 h-11" />
+                  <Label className="text-xs font-semibold uppercase tracking-widest text-primary">Identificação</Label>
+                  <div className="mt-2 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div className="sm:col-span-2">
+                      <Input value={form.nome} onChange={(e) => set("nome", e.target.value)} placeholder="Nome completo *" className="h-11" />
+                    </div>
+                    <div>
+                      <Input value={form.cpf} onChange={(e) => set("cpf", e.target.value)} placeholder="CPF" className="h-11 font-mono" />
+                    </div>
+                    <div>
+                      <Input value={form.rg} onChange={(e) => set("rg", e.target.value)} placeholder="RG" className="h-11 font-mono" />
+                    </div>
+                    <div>
+                      <Input type="date" value={form.nascimento} onChange={(e) => set("nascimento", e.target.value)} placeholder="Nascimento" className="h-11" />
+                    </div>
+                    <div>
+                      <Input value={form.genero} onChange={(e) => set("genero", e.target.value)} placeholder="Gênero" className="h-11" />
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <Label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Telefone</Label>
-                  <Input value={telefone} onChange={(e) => setTelefone(e.target.value)} placeholder="5511999999999" className="mt-1.5 h-11 font-mono" />
+
+                {/* Contato */}
+                <div className="border-t border-border/60 pt-4">
+                  <Label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Contato</Label>
+                  <div className="mt-2 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div>
+                      <Input value={form.telefone} onChange={(e) => set("telefone", e.target.value)} placeholder="Telefone (com DDD)" className="h-11 font-mono" />
+                    </div>
+                    <div>
+                      <Input type="email" value={form.email} onChange={(e) => set("email", e.target.value)} placeholder="E-mail" className="h-11" />
+                    </div>
+                    <div className="sm:col-span-2">
+                      <Input value={form.endereco} onChange={(e) => set("endereco", e.target.value)} placeholder="Endereço completo" className="h-11" />
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <Label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Email</Label>
-                  <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="paciente@email.com" className="mt-1.5 h-11" />
+
+                {/* Redes sociais */}
+                <div className="border-t border-border/60 pt-4">
+                  <Label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Redes sociais</Label>
+                  <div className="mt-2 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div>
+                      <Input value={form.instagram} onChange={(e) => set("instagram", e.target.value)} placeholder="@instagram" className="h-11" />
+                    </div>
+                    <div>
+                      <Input value={form.facebook} onChange={(e) => set("facebook", e.target.value)} placeholder="facebook.com/seuperfil" className="h-11" />
+                    </div>
+                  </div>
                 </div>
+
+                {/* Observações */}
+                <div className="border-t border-border/60 pt-4">
+                  <Label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Observações</Label>
+                  <Input value={form.observacoes} onChange={(e) => set("observacoes", e.target.value)} placeholder="Alergias, restrições, anotações..." className="mt-2 h-11" />
+                </div>
+
                 <Button
                   onClick={() => createMutation.mutate()}
-                  disabled={createMutation.isPending || !nome.trim()}
+                  disabled={createMutation.isPending || !form.nome.trim()}
                   className="gradient-primary w-full font-semibold"
                 >
                   {createMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Plus className="mr-2 h-4 w-4" />}

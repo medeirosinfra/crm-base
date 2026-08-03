@@ -29,10 +29,13 @@ export interface Paciente {
   nascimento?: string | null;
   observacoes?: string | null;
   cpf?: string | null;
+  rg?: string | null;
   genero?: string | null;
   endereco?: string | null;
   origem?: string | null;
   ultima_consulta?: string | null;
+  instagram?: string | null;
+  facebook?: string | null;
   created_at: string;
 }
 
