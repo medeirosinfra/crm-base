@@ -170,6 +170,14 @@ CRM SaaS **white-label multi-tenant** para clínicas: 1 código, N clínicas, ca
 - **Testado**: criar registro de procedimento e medicação via API
 - ⚠️ **Lição**: adicionar novo tipo exige atualizar CHECK constraint da tabela
 
+### 🔑 CONEXÃO DO WHATSAPP DA CLÍNICA POR QR CODE (03/08) — `a296bfc`
+- **Service** `whatsapp-connect.ts`: interage com o WAHA (criar/iniciar sessão da clínica, obter QR PNG, status, desconectar) — roda no servidor (não expõe API key do WAHA)
+- **Rotas customizadas** no `server.ts`: `POST /api/whatsapp/conectar` (QR), `GET /api/whatsapp/status`, `POST /api/whatsapp/desconectar`
+- **Tela `/whatsapp`**: cadastra o número + botão "Conectar via QR", exibe o QR, poll até conectar, botão desconectar
+- Nome da sessão = `clinica_<slug>` (separada da sessão master `crmprincipal`)
+- **Testado**: conectar retorna QR (SCAN_QR_CODE), status, desconectar ✓
+- **Como usar**: dona salva o número → conecta via QR → API do WAHA cria sessão própria da clínica
+
 ### Infra/migrações
 - Descoberto: banco principal é `supabase` (tabelas completas). `crm_base` é órfão
 - 10 migrations já aplicadas; marcadas como `.applied` para `migrate.sh` parar de tentar reaplicar
