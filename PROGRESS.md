@@ -66,7 +66,7 @@ CRM SaaS **white-label multi-tenant** para clínicas: 1 código, N clínicas, ca
 | # | Item | Status |
 |---|---|---|
 | 1 | **PUBLICAR bot integrado no GitHub** | ✅ **FEITO 03/08** — commit `7bc1533` |
-| 2 | Criar bot específico de botox/preenchimento (keyword + resposta) | ⏳ testar resposta real |
+| 2 | Criar bot específico de botox/preenchimento (keyword + resposta) | ✅ **FEITO 03/08** — `ff5b711` |
 | 3 | Bot por clínica (cada clínica seu bot) | ✅ **FEITO 03/08** — resolve tenant pela `waha_sessao` |
 | 4 | Financeiro detalhado (DRE completo) | ✅ **FEITO 03/08** — `calcularDre` + abas por categoria/mês |
 | 5 | Campanhas com disparo real (fila + relatório) | ⏳ |
@@ -94,6 +94,13 @@ CRM SaaS **white-label multi-tenant** para clínicas: 1 código, N clínicas, ca
 - `calcularDre()`: agrega por categoria e mês, calcula resultado e margem
 - Página `/financeiro`: seção DRE com abas "Por categoria" e "Por mês" (barras)
 - Testado com dados de exemplo: receitas 2880 / despesas 2000 / resultado 880 / margem 30.6%
+
+### Bot de botox/preenchimento + página persistida (commit `ff5b711`)
+- `/master/bots` **persistido no banco** (antes estado local mockado que não afetava o webhook)
+- Seletor de clínica (tenant_id) ao criar/editar bot + badge de clínica/keyword nos cards
+- Bots reais da Clínica Slim Body (Estética): Atendente Botox ("botox"), Atendente Preenchimento ("preenchimento"), Atendente Slim Body (geral)
+- Sessão WAHA `clinic-slim-body` configurada (STOPPED, aguardando QR do número real)
+- **Testado**: seleção correta por sessão + isolamento (Odonto não pega bots da Slim)
 
 ### Infra/migrações
 - Descoberto: banco principal é `supabase` (tabelas completas). `crm_base` é órfão
