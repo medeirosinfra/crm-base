@@ -71,9 +71,12 @@ Criar uma **linha de produtos SaaS white-label** para revenda, cada um focado nu
 ### Em andamento / a fazer:
 - ⏳ Configurar domínio no Cloudflare Tunnel (`crm.medeirossolucoestech.com.br`)
 
-### Implementado recentemente (02/08):
-- ✅ **Roles & Permissões (RBAC)** — matriz de cargos (super_admin, admin, gerente, financeiro, staff) × módulos. Guard `RequireRole` por rota + sidebar filtrada por cargo. Protegidas: clinicas (super_admin), financeiro, white-label.
-- ✅ **CRUD completo de Clínicas** — criar/editar/excluir com branding (cor, domínio, WAHA), segmento, status, plano (testado via API)
+### Implementado (02-03/08):
+- ✅ **Roles & Permissões (RBAC)** — matriz de cargos × módulos
+- ✅ **CRUD completo de Clínicas** — branding, segmento, plano
+- ✅ **Sistema de Harmonização Facial** (migration 007): 15 procedimentos (botox, preenchimento, fios PDO, bioestimuladores), 4 profissionais especialistas, tabelas `anamneses` + `prontuario_registros` com RLS
+- ✅ **Página de Anamnese** (`/anamnese`): ficha de avaliação facial (histórico de saúde, avaliação facial, avaliador) + service `prontuario.ts`
+- ✅ **Dashboard com dados reais**, **Relatórios & BI**, **Agenda completa**, **Detalhe do Paciente**
 
 ### Implementado recentemente (02/08):
 - ✅ **CRUD completo de Clínicas** — criar/editar/excluir com branding (cor, domínio, WAHA), segmento, status, plano (testado via API)

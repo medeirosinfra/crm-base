@@ -45,6 +45,12 @@ CRM SaaS **white-label multi-tenant** para clínicas: 1 código, N clínicas, ca
 - `src/lib/supabase/pacientes.ts` — getPaciente, histórico, transações, update
 - `src/routes/pacientes.$id.tsx` — abas Visão geral/Histórico/Financeiro + cards resumo
 
+### Sistema de Harmonização Facial ✅ (03/08)
+- Migration 007: 15 procedimentos (botox, preenchimento, fios PDO, bioestimuladores, bichectomia), 4 profissionais especialistas, tabelas `anamneses` + `prontuario_registros` com RLS
+- `src/lib/supabase/prontuario.ts` — getAnamnese, upsertAnamnese, listProntuario, createProntuarioRegistro
+- `src/routes/anamnese.tsx` — ficha de avaliação facial (histórico de saúde, avaliação facial, avaliador)
+- Sidebar + permissões: módulo `anamnese` para todos os cargos (exceto financeiro)
+
 ## 🚧 Próximos (roadmap)
 
 | # | Item | Status |
