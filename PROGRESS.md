@@ -155,6 +155,13 @@ CRM SaaS **white-label multi-tenant** para clínicas: 1 código, N clínicas, ca
 - **Testado**: plano 2200 em 6x → parcelas de 350 mensais (16/08 → 16/01); pagamento parcial (100 de 350 → "parcial") e total (→ "pago")
 - Exemplo da Dra. Luana suportado: parcelas com datas, marcação PG, e pagamento parcial (266,66 pago com 100,00 restante)
 
+### 📱 WhatsApp da Clínica + Lembretes + Funcionários completo (03/08) — `e9fac4e`
+- **Tela `/whatsapp`**: dona/responsável cadastra o número do WhatsApp da clínica (migration 013). RLS corrigido (migration 014) p/ admin do próprio tenant atualizar. O número fica registrado p/ disparos/bots/lembretes da clínica
+- **Lembrete de vencimento** (`lembretes.ts`): config em `/parcelas` (ativo + N dias antes), lista parcelas a vencer em 30 dias, texto do lembrete pronto. **Envio real** será ativado quando a clínica conectar o número
+- **Funcionários completo**: CPF, especialidade/área, setor (criar inline), situação (ativo/inativo), edição (migration 015)
+- Módulos `whatsapp` adicionados a segmentos e permissões
+- **Testado**: salvar número, config lembrete, detectar parcela a vencer, criar funcionário com todos campos
+
 ### Infra/migrações
 - Descoberto: banco principal é `supabase` (tabelas completas). `crm_base` é órfão
 - 10 migrations já aplicadas; marcadas como `.applied` para `migrate.sh` parar de tentar reaplicar
