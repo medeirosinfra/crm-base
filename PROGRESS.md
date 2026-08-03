@@ -102,6 +102,13 @@ CRM SaaS **white-label multi-tenant** para clínicas: 1 código, N clínicas, ca
 - Sessão WAHA `clinic-slim-body` configurada (STOPPED, aguardando QR do número real)
 - **Testado**: seleção correta por sessão + isolamento (Odonto não pega bots da Slim)
 
+### Fix: criação de clínica funcionando (commit `4c81dd4`) — ⚠️ IMPORTANTE
+- **Problema**: server-fn do TanStack Start (`createClinicWithAdmin`) falhava no Docker com "Seroval Error" — o handler nunca executava, então criar clínica dava erro
+- **Causa raiz**: (1) insert com coluna `ativo` inexistente na tabela tenants; (2) server-fn do TanStack não funciona no preset node-server do Docker
+- **Solução**: rota customizada `POST /api/clinicas` interceptada no `src/server.ts` (mesma infra do webhook `/webhook/waha` que funciona)
+- Também: `SUPABASE_URL` do server → Kong local `172.16.0.50:54321` (não mais pela internet/Cloudflare)
+- **Testado**: criação de clínica de Estética via rota → tenant + admin + profile + funcionário criados ✓
+
 ### Infra/migrações
 - Descoberto: banco principal é `supabase` (tabelas completas). `crm_base` é órfão
 - 10 migrations já aplicadas; marcadas como `.applied` para `migrate.sh` parar de tentar reaplicar
