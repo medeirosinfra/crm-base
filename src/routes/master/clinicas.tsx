@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Plus, Search, MessageCircle, Loader2, Pencil, Trash2 } from "lucide-react";
+import { Plus, Search, MessageCircle, Loader2, Pencil, Trash2, KeyRound } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
@@ -21,11 +21,11 @@ import {
 } from "@/components/ui/select";
 import {
   listTenants,
-  createTenant,
   updateTenant,
   deleteTenant,
   type Tenant,
 } from "@/lib/supabase/tenants";
+import { createClinicWithAdmin } from "@/server-functions/create-clinic";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/master/clinicas")({
@@ -53,6 +53,10 @@ const formInicial = {
   plano: "starter" as Tenant["plano"],
   descricao: "",
   cor_primaria: "#e11d48",
+  // Campos do admin automático
+  adminNome: "",
+  adminEmail: "",
+  adminSenha: "",
 };
 
 function ClinicasMaster() {
@@ -61,6 +65,8 @@ function ClinicasMaster() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Tenant | null>(null);
   const [form, setForm] = useState(formInicial);
+  const [credenciais, setCredenciais] = useState<{ email: string; senha: string } | null>(null);
+  const [credenciaisOpen, setCredenciaisOpen] = useState(false);
 
   const { data: tenants, isLoading } = useQuery({ queryKey: ["tenants"], queryFn: listTenants });
 
@@ -82,12 +88,15 @@ function ClinicasMaster() {
       plano: t.plano,
       descricao: t.descricao ?? "",
       cor_primaria: t.cor_primaria,
+      adminNome: "",
+      adminEmail: "",
+      adminSenha: "",
     });
     setDialogOpen(true);
   };
 
   const saveMutation = useMutation({
-    mutationFn: () => {
+    mutationFn: async () => {
       if (editing) {
         return updateTenant(editing.id, {
           nome: form.nome,
@@ -98,25 +107,27 @@ function ClinicasMaster() {
           cor_primaria: form.cor_primaria,
         });
       }
-      return createTenant({
+      // Criação com admin automático via server function
+      const result = await createClinicWithAdmin({
         nome: form.nome,
         slug: form.slug || form.nome.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
-        especialidade: form.especialidade || null,
-        status: form.status,
+        especialidade: form.especialidade,
+        adminNome: form.adminNome || form.nome,
+        adminEmail: form.adminEmail,
+        adminSenha: form.adminSenha,
+        corPrimaria: form.cor_primaria,
         plano: form.plano,
-        descricao: form.descricao || null,
-        cor_primaria: form.cor_primaria,
-        cor_segundaria: null,
-        dominio: null,
-        waha_sessao: null,
-        whatsapp_sessions: 0,
-        mrr: 0,
       });
+      return result;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["tenants"] });
-      toast.success(editing ? "Clínica atualizada!" : "Clínica criada!");
+      toast.success("Clínica criada com admin automático!");
       setDialogOpen(false);
+      if (data && "credenciais" in data) {
+        setCredenciais(data.credenciais);
+        setCredenciaisOpen(true);
+      }
     },
     onError: (e) => toast.error(String(e)),
   });
@@ -263,11 +274,63 @@ function ClinicasMaster() {
                 </Select>
               </div>
             </div>
+
+            {/* Admin automático — só na criação */}
+            {!editing && (
+              <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">
+                <div className="flex items-center gap-2">
+                  <KeyRound className="h-4 w-4 text-primary" />
+                  <p className="text-xs font-semibold uppercase tracking-widest text-primary">
+                    Admin automático da clínica
+                  </p>
+                </div>
+                <p className="mt-1 text-[11px] text-muted-foreground">
+                  Cria automaticamente o login do administrador que a dona da clínica usará.
+                </p>
+                <div className="mt-3 space-y-3">
+                  <div>
+                    <Label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Nome do admin</Label>
+                    <Input value={form.adminNome} onChange={(e) => set("adminNome", e.target.value)} placeholder="Nome da responsável" className="mt-1.5 h-11" />
+                  </div>
+                  <div>
+                    <Label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Email do admin *</Label>
+                    <Input type="email" value={form.adminEmail} onChange={(e) => set("adminEmail", e.target.value)} placeholder="dona@clinica.com.br" className="mt-1.5 h-11" required />
+                  </div>
+                  <div>
+                    <Label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Senha do admin *</Label>
+                    <Input type="password" value={form.adminSenha} onChange={(e) => set("adminSenha", e.target.value)} placeholder="Senha temporária" className="mt-1.5 h-11" required minLength={6} />
+                  </div>
+                </div>
+              </div>
+            )}
+
             <Button type="submit" disabled={saveMutation.isPending} className="gradient-primary w-full font-semibold">
               {saveMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Plus className="mr-2 h-4 w-4" />}
-              {editing ? "Salvar alterações" : "Criar clínica"}
+              {editing ? "Salvar alterações" : "Criar clínica com admin"}
             </Button>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog de credenciais geradas */}
+      <Dialog open={credenciaisOpen} onOpenChange={setCredenciaisOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader><DialogTitle>Clínica criada! Entregue o acesso à dona</DialogTitle></DialogHeader>
+          {credenciais && (
+            <div className="space-y-4">
+              <div className="rounded-lg border border-success/30 bg-success/10 p-4">
+                <p className="text-[11px] font-semibold uppercase tracking-widest text-success">Credenciais do admin</p>
+                <p className="mt-2 text-sm"><span className="text-muted-foreground">Email:</span> <span className="font-mono font-semibold">{credenciais.email}</span></p>
+                <p className="mt-1 text-sm"><span className="text-muted-foreground">Senha:</span> <span className="font-mono font-semibold">{credenciais.senha}</span></p>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                A dona da clínica loga em <span className="font-mono">crm.medeirossolucoestech.com.br</span> com essas credenciais e gerencia funcionários, setores e agendas.
+              </p>
+              <Button onClick={() => setCredenciaisOpen(false)} className="gradient-primary w-full font-semibold">
+                Entendi
+              </Button>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>
