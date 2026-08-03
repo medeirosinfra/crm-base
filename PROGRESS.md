@@ -134,6 +134,19 @@ CRM SaaS **white-label multi-tenant** para clínicas: 1 código, N clínicas, ca
 - `a550677`: página `/master/clinicas` renomeada para **Clientes** + KPIs (total, ativos, trial, MRR) + guia "Como criar um cliente em 3 passos" + botão "+ Novo Cliente"
 - `f8b217a`: **Visão do Ecossistema** com CTA "+ Novo Cliente", cards de clínicas clicáveis, "Ver todas →"
 
+### 🦷 2º CLIENTE REAL — Clínica Odonto Mais (03/08)
+- Clínica de **Odontologia** criada via `POST /api/clinicas` (segmento odonto, 11 módulos)
+- **Cor**: azul céu `#0ea5e9` · **Plano**: pro
+- **Admin**: `odonto.mais@gmail.com` (senha em env)
+- Painel com módulos de odonto (Agenda, Pacientes, Procedimentos, Financeiro, etc.)
+
+### 👤 Formulário de cadastro de paciente completo (03/08) — `8592350`
+- Migration 011: campos `rg`, `instagram`, `facebook` em `pacientes`
+- Form "Novo Paciente" expandido: **nome, CPF, RG, nascimento, gênero, telefone, email, endereço, instagram, facebook, observações**
+- Layout em seções (Identificação / Contato / Redes sociais / Observações)
+- Testado via API: paciente com todos os campos criado ✓
+- ⚠️ **Nota**: após nova migration, reiniciar `supabase-rest` para recarregar schema do PostgREST
+
 ### Infra/migrações
 - Descoberto: banco principal é `supabase` (tabelas completas). `crm_base` é órfão
 - 10 migrations já aplicadas; marcadas como `.applied` para `migrate.sh` parar de tentar reaplicar
