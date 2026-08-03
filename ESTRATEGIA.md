@@ -71,11 +71,15 @@ Criar uma **linha de produtos SaaS white-label** para revenda, cada um focado nu
 ### Em andamento / a fazer:
 - ⏳ Configurar domínio no Cloudflare Tunnel (`crm.medeirossolucoestech.com.br`)
 
-### Implementado (02-03/08):
+### Implementado (02-04/08):
+- ✅ **PLATAFORMA 2 CAMADAS (Master + Clínica)**:
+  - **Painel Master** (`/master`): super_admin. Dashboard do ecossistema, Gestão de Clínicas, White-Label, Automações
+  - **Painel da Clínica**: admin/staff. Rotas no raiz (/agenda, /pacientes...). Login redireciona: super_admin→/master, clínica→/agenda
+  - **Admin automático**: server function `createClinicWithAdmin` cria tenant + auth admin + profile + funcionario ao cadastrar clínica
+  - **Menus dinâmicos por segmento**: tabela `segmento_modulos` define quais módulos cada segmento mostra
+  - **Funcionários** (`/funcionarios`) e **Setores** (`/setores`): admin da clínica gerencia equipe
 - ✅ **Roles & Permissões (RBAC)** — matriz de cargos × módulos
-- ✅ **CRUD completo de Clínicas** — branding, segmento, plano
-- ✅ **Sistema de Harmonização Facial** (migration 007): 15 procedimentos (botox, preenchimento, fios PDO, bioestimuladores), 4 profissionais especialistas, tabelas `anamneses` + `prontuario_registros` com RLS
-- ✅ **Página de Anamnese** (`/anamnese`): ficha de avaliação facial (histórico de saúde, avaliação facial, avaliador) + service `prontuario.ts`
+- ✅ **Sistema de Harmonização Facial** (migration 007): 15 procedimentos, 4 profissionais, anamnese + prontuário
 - ✅ **Dashboard com dados reais**, **Relatórios & BI**, **Agenda completa**, **Detalhe do Paciente**
 
 ### Implementado recentemente (02/08):

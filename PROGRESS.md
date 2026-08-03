@@ -56,12 +56,17 @@ CRM SaaS **white-label multi-tenant** para clínicas: 1 código, N clínicas, ca
 | # | Item | Status |
 |---|---|---|
 | 1 | Empty states padronizados (componente `EmptyState`) | ✅ criado |
-| 2 | Anamnese + Prontuário (migration 006) | ⏳ |
-| 3 | Financeiro detalhado (DRE completo, contas a pagar/receber) | ⏳ |
-| 4 | Campanhas com disparo real (fila + relatório de entregas) | ⏳ |
-| 5 | Automações (N8N/IA) | ⏳ |
-| 6 | Testes automatizados (Vitest) | ⏳ |
-| 7 | Screenshots no README do GitHub | ⏳ |
+| 2 | Anamnese + Prontuário | ✅ migration 007 + página /anamnese |
+| 3 | **PLATAFORMA 2 CAMADAS** | ✅ Master (/master) + Clínica (raiz) |
+| 4 | **Menus dinâmicos por segmento** | ✅ segmento_modulos |
+| 5 | **Admin automático ao criar clínica** | ✅ createClinicWithAdmin |
+| 6 | **Funcionários e Setores** | ✅ /funcionarios + /setores |
+| 7 | Financeiro detalhado (DRE completo) | ⏳ |
+| 8 | Campanhas com disparo real | ⏳ |
+| 9 | Automações (N8N/IA) + bots + anúncios | ⏳ |
+| 10 | Subdomínio por clínica (DNS wildcard) | ⏳ |
+| 11 | Testes automatizados (Vitest) | ⏳ |
+| 12 | Screenshots no README do GitHub | ⏳ |
 
 ## 📋 Padrões de código
 
