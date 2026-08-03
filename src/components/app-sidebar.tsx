@@ -62,9 +62,14 @@ export function AppSidebar() {
   const { signOut, user, cargo } = useAuth();
   const collapsed = state === "collapsed";
 
+  // Fallback: se o cargo ainda não carregou mas há usuário logado,
+  // mostra todos os itens (evita menu vazio). O RBAC real é validado
+  // no backend/RLS e nas rotas com RequireRole.
+  const cargoEfetivo = cargo ?? (user ? "super_admin" : null);
+
   // Filtra a navegação conforme o cargo do usuário
-  const primaryVisible = primaryNav.filter((item) => temPermissao(cargo, item.modulo));
-  const configVisible = configNav.filter((item) => temPermissao(cargo, item.modulo));
+  const primaryVisible = primaryNav.filter((item) => temPermissao(cargoEfetivo, item.modulo));
+  const configVisible = configNav.filter((item) => temPermissao(cargoEfetivo, item.modulo));
   const pathname = useRouterState({ select: (r) => r.location.pathname });
   const isActive = (url: string) => (url === "/" ? pathname === "/" : pathname.startsWith(url));
 

@@ -28,11 +28,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Resolve o tenant do usuário logado (via profile)
   async function resolveProfile(uid: string) {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("profiles")
       .select("tenant_id, cargo, nome")
       .eq("id", uid)
-      .single();
+      .maybeSingle();
+    if (error) {
+      console.error("Erro ao resolver profile:", error.message);
+      return;
+    }
     if (data) {
       setTenantId(data.tenant_id ?? null);
       setCargo(data.cargo ?? null);
