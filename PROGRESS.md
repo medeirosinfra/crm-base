@@ -229,3 +229,14 @@ CRM SaaS **white-label multi-tenant** para clínicas: 1 código, N clínicas, ca
 - **Local**: `http://172.16.0.50:3110`
 - **GitHub**: https://github.com/medeirosinfra/crm-base
 - **Admin**: email/senha em variáveis de ambiente no servidor (não commitar credenciais)
+
+## ✅ 07/08/2026 — Subdomínio por cliente + Disparos agendados com IA
+- **Subdomínio por cliente (multi-tenant SaaS)**: campo novo `tenants.subdominio` (migration 019). Luana ganhou `subdominio=draluana` (slug `Luanamenos` intocado). Resolver `getSubdomainFromHost` trata `draluana.medeirossolucoestech.com.br` (2 partes). Endpoint público `GET /api/tenant/:sub` (server.ts, service_role) devolve branding p/ login. `login.tsx` exibe nome + cor da clínica pelo subdomínio. **Nada quebrou**: 8 pacientes, 9 agendamentos intactos; login normal OK.
+- **Automações / Disparos agendados com IA** (migration 018 + server.ts): `POST /api/ia/gerar-mensagem` (gera copy de venda via 9router/OpenRouter, model meucombo, endpoint 172.16.0.50:20128); `POST /api/disparos/agendar`, `GET /api/disparos`, `GET /api/disparos/devidos`, `POST /api/disparos/:id/cancelar`. Reusa tabela `campanhas` + `campanha_contatos`. Página `/master/automacoes` ainda é placeholder (faltou o UI — pendência).
+- **PENDÊNCIA DNS (dono, no Cloudflare)**: wildcard CNAME `*.medeirossolucoestech.com.br` → túnel + rota `*.medeirossolucoestech.com.br` → `http://172.16.0.50:3110`.
+
+## ✅ 07/08/2026 (fim) — Subdomínio da Luana NO AR + fix "Failed to fetch"
+- **URL ativa**: `https://draluana.medeirossolucoestech.com.br` → painel da Dra. Luana com branding. Login OK (`luana@clinicaodonto.com.br`).
+- **Fix "Failed to fetch"**: causa = browser chamava `https://crm.../supabase` de `draluana...` (cross-origin → CORS bloq). Correção: `src/lib/supabase/client.ts` usa `window.location.origin + /supabase` (mesma origem). JWT `iss` inalterado (localhost:54321) → login Luana + master preservados.
+- **Wildcard Cloudflare**: registro `Tunnel *.medeirossolucoestech.com.br → servidor casa` criado pelo dono. Clientes futuros ganham subdomínio automático.
+- **Dados**: 8 pacientes, 9 agendamentos intactos. crm master HTTP 200.

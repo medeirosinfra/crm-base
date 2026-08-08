@@ -13,6 +13,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import { listSetores, createSetor } from "@/lib/supabase/funcionarios";
 import { toast } from "sonner";

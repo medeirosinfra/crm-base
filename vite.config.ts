@@ -18,7 +18,33 @@ export default defineConfig({
     preset: "node-server",
     output: { dir: ".output" },
     routeRules: {
-      // Proxy: /supabase/* → Supabase local (Kong 54321)
+      // Anti-cache para o Cloudflare: páginas sempre frescas do origin.
+      // Assets já têm hash único (immutable), mas o HTML NAO pode ficar em cache.
+      "/": {
+        headers: {
+          "cache-control": "no-cache, no-store, must-revalidate, max-age=0",
+          "cdn-cache-control": "no-cache, no-store",
+        },
+      },
+      "/pacientes": {
+        headers: {
+          "cache-control": "no-cache, no-store, must-revalidate",
+          "cdn-cache-control": "no-cache, no-store",
+        },
+      },
+      "/pacientes/**": {
+        headers: {
+          "cache-control": "no-cache, no-store, must-revalidate",
+          "cdn-cache-control": "no-cache, no-store",
+        },
+      },
+      "/login/**": {
+        headers: {
+          "cache-control": "no-cache, no-store, must-revalidate",
+          "cdn-cache-control": "no-cache, no-store",
+        },
+      },
+      // Proxy: /supabase/* → Supabase local (proxy Kong 5432)
       // Usa o IP do HOST (172.16.0.50) pois o container alcança o host via rede.
       // 127.0.0.1 dentro do container é o próprio container (não funciona).
       "/supabase/**": {

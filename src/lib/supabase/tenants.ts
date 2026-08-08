@@ -133,6 +133,26 @@ export async function createPaciente(input: Omit<Paciente, "id" | "tenant_id" | 
   return data as Paciente;
 }
 
+/** Busca um paciente pelo id. */
+export async function getPaciente(id: string): Promise<Paciente | null> {
+  const { data, error } = await supabase.from("pacientes").select("*").eq("id", id).single();
+  if (error) return null;
+  return data as Paciente;
+}
+
+/** Atualiza um paciente. */
+export async function updatePaciente(id: string, input: Partial<Paciente>): Promise<Paciente> {
+  const { data, error } = await supabase.from("pacientes").update(input).eq("id", id).select().single();
+  if (error) throw new Error(`Erro ao atualizar paciente: ${error.message}`);
+  return data as Paciente;
+}
+
+/** Exclui um paciente (permanente — RLS exige tenant logado). */
+export async function deletePaciente(id: string): Promise<void> {
+  const { error } = await supabase.from("pacientes").delete().eq("id", id);
+  if (error) throw new Error(`Erro ao excluir paciente: ${error.message}`);
+}
+
 // ---------------- AGENDAMENTOS ----------------
 
 export async function listAgendamentos(): Promise<Agendamento[]> {

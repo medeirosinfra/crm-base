@@ -28,6 +28,7 @@ export interface AgendamentoPaciente {
   status: string;
   tipo: string | null;
   valor: number | null;
+  observacoes: string | null;
   procedimento: { nome: string } | null;
   profissional: { nome: string } | null;
 }
@@ -52,12 +53,12 @@ export async function getPaciente(id: string): Promise<PacienteDetalhe | null> {
 export async function listAgendamentosDoPaciente(id: string): Promise<AgendamentoPaciente[]> {
   const { data, error } = await db
     .from("agendamentos")
-    .select("id, data, status, tipo, valor, procedimento:procedimentos(nome), profissional:profissionais(nome)")
+    .select("id, data, status, tipo, valor, observacoes, procedimento:procedimentos(nome), profissional:profissionais(nome)")
     .eq("paciente_id", id)
     .order("data", { ascending: false });
 
   if (error) throw new Error(`Erro ao buscar histórico: ${error.message}`);
-  return (data ?? []) as AgendamentoPaciente[];
+  return (data ?? []) as unknown as AgendamentoPaciente[];
 }
 
 /** Lista transações financeiras do paciente. */

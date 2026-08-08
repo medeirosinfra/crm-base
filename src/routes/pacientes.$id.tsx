@@ -1,19 +1,35 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { ArrowLeft, Users, Wallet, CalendarDays, Loader2, Phone, Mail, Scissors } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ArrowLeft, Users, Wallet, CalendarDays, Loader2, Phone, Mail, Scissors, HandCoins, Plus, PenLine, ExternalLink, ClipboardList, Pencil, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import { ClinicLayout } from "@/components/layouts/clinic-layout";
 import { RequireClinic } from "@/components/require-clinic";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   getPaciente,
   listAgendamentosDoPaciente,
   listTransacoesDoPaciente,
 } from "@/lib/supabase/pacientes";
+import { listPlanosPagamento, criarPlanoPagamento } from "@/lib/supabase/pagamentos";
+import { updatePaciente, deletePaciente, type Paciente } from "@/lib/supabase/tenants";
 import { formatData, formatTelefone, formatBRL, formatHora } from "@/lib/formatters";
-import { Link } from "@tanstack/react-router";
+import { PatientFichaTab } from "@/components/contacts/patient-ficha-tab";
 
 export const Route = createFileRoute("/pacientes/$id")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    tab: (search.tab as string) || "visao",
+  }),
   head: () => ({ meta: [{ title: "Detalhe do Paciente — MedeirosInfra" }] }),
   component: () => (
     <RequireClinic>
@@ -31,6 +47,10 @@ const statusLabels: Record<string, string> = {
 
 function PacienteDetalhePage() {
   const { id } = Route.useParams();
+  const search = Route.useSearch();
+  const defaultTab = search.tab || "visao";
+  const [activeTab, setActiveTab] = useState(defaultTab);
+  const ensureTab = (val: string) => { setActiveTab(val); window.history.replaceState({}, "", `/pacientes/${id}?tab=${val}`); };
 
   const { data: paciente, isLoading } = useQuery({
     queryKey: ["pacientes", id],
@@ -43,6 +63,96 @@ function PacienteDetalhePage() {
   const { data: transacoes } = useQuery({
     queryKey: ["pacientes", id, "transacoes"],
     queryFn: () => listTransacoesDoPaciente(id),
+  });
+  const { data: planos } = useQuery({
+    queryKey: ["pacientes", id, "planos"],
+    queryFn: () => listPlanosPagamento().then((ps) => ps.filter((p) => p.paciente_id === id)),
+  });
+
+  // ---- Edição do paciente (dialog) ----
+  const [openEdit, setOpenEdit] = useState(false);
+  const [editForm, setEditForm] = useState({
+    nome: "",
+    telefone: "",
+    email: "",
+    endereco: "",
+    observacoes: "",
+  });
+  const abrirEdicao = (p: Paciente) => {
+    setEditForm({
+      nome: p.nome ?? "",
+      telefone: p.telefone ?? "",
+      email: p.email ?? "",
+      endereco: p.endereco ?? "",
+      observacoes: p.observacoes ?? "",
+    });
+    setOpenEdit(true);
+  };
+  const setEdit = (campo: keyof typeof editForm, valor: string) => setEditForm((f) => ({ ...f, [campo]: valor }));
+
+  const editMutation = useMutation({
+    mutationFn: () =>
+      updatePaciente(id, {
+        nome: editForm.nome,
+        telefone: editForm.telefone || null,
+        email: editForm.email || null,
+        endereco: editForm.endereco || null,
+        observacoes: editForm.observacoes || null,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["pacientes", id] });
+      toast.success("Paciente atualizado!");
+      setOpenEdit(false);
+    },
+    onError: (e) => toast.error(String(e)),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (pacienteId: string) => deletePaciente(pacienteId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["pacientes"] });
+      toast.success("Paciente excluído!");
+      window.location.href = "/pacientes";
+    },
+    onError: (e) => toast.error(String(e)),
+  });
+  const handleExcluir = (p: Paciente) => {
+    if (!confirm(`Excluir o paciente "${p.nome}"? Esta ação não pode ser desfeita.`)) return;
+    deleteMutation.mutate(p.id);
+  };
+
+  // Formulário da negociação (o que foi fechado com o cliente na avaliação)
+  const [openNegociacao, setOpenNegociacao] = useState(false);
+  const [form, setForm] = useState({
+    procedimento_id: "",
+    descricao: "",
+    valor_total: "",
+    entrada: "0",
+    num_parcelas: "1",
+    vencimento: "",
+  });
+  const set = (campo: keyof typeof form, valor: string) => setForm((f) => ({ ...f, [campo]: valor }));
+  const queryClient = useQueryClient();
+
+  const criarNegociacao = useMutation({
+    mutationFn: () =>
+      criarPlanoPagamento({
+        paciente_id: id,
+        procedimento_id: form.procedimento_id || null,
+        descricao: form.descricao || null,
+        valor_total: parseFloat(form.valor_total) || 0,
+        entrada: parseFloat(form.entrada) || 0,
+        num_parcelas: parseInt(form.num_parcelas) || 1,
+        vencimento: form.vencimento,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["pacientes", id, "planos"] });
+      queryClient.invalidateQueries({ queryKey: ["pacientes", id, "transacoes"] });
+      toast.success("Negociação registrada! Parcelas geradas.");
+      setOpenNegociacao(false);
+      setForm({ procedimento_id: "", descricao: "", valor_total: "", entrada: "0", num_parcelas: "1", vencimento: "" });
+    },
+    onError: (e) => toast.error(`Erro ao registrar: ${e.message}`),
   });
 
   const totalGasto = (transacoes ?? [])
@@ -81,8 +191,8 @@ function PacienteDetalhePage() {
           <div className="grid h-16 w-16 place-items-center rounded-2xl gradient-primary text-2xl font-bold text-primary-foreground shadow-glow">
             {paciente.nome.charAt(0)}
           </div>
-          <div>
-            <h1 className="font-display text-3xl font-bold text-foreground">{paciente.nome}</h1>
+          <div className="min-w-0 flex-1">
+            <h1 className="font-display text-3xl font-bold text-foreground truncate">{paciente.nome}</h1>
             <div className="mt-1 flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
               <span className="flex items-center gap-1.5">
                 <Phone className="h-3.5 w-3.5 text-primary" /> {formatTelefone(paciente.telefone)}
@@ -98,6 +208,34 @@ function PacienteDetalhePage() {
                 </span>
               )}
             </div>
+          </div>
+
+          {/* Ações dentro da ficha do paciente */}
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              size="sm"
+              className="gradient-primary shadow-glow font-semibold"
+              onClick={() => ensureTab("ficha")}
+            >
+              <ClipboardList className="mr-1.5 h-4 w-4" /> Ficha & Avaliação
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="font-medium"
+              onClick={() => abrirEdicao(paciente)}
+            >
+              <Pencil className="mr-1.5 h-4 w-4 text-primary" /> Editar
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="font-medium hover:border-destructive/40 hover:text-destructive"
+              onClick={() => handleExcluir(paciente)}
+              disabled={deleteMutation.isPending}
+            >
+              <Trash2 className="mr-1.5 h-4 w-4 text-destructive" /> Excluir
+            </Button>
           </div>
         </div>
 
@@ -120,9 +258,12 @@ function PacienteDetalhePage() {
           </Card>
         </div>
 
-        <Tabs defaultValue="visao" className="mt-8">
+        <Tabs value={activeTab} onValueChange={ensureTab} className="mt-8">
           <TabsList>
             <TabsTrigger value="visao">Visão geral</TabsTrigger>
+            <TabsTrigger value="ficha">
+              <ClipboardList className="mr-1.5 h-3.5 w-3.5" /> Ficha & Prontuário
+            </TabsTrigger>
             <TabsTrigger value="historico">
               <CalendarDays className="mr-1.5 h-3.5 w-3.5" /> Histórico
             </TabsTrigger>
@@ -165,6 +306,14 @@ function PacienteDetalhePage() {
             </Card>
           </TabsContent>
 
+          <TabsContent value="ficha">
+            <PatientFichaTab
+              pacienteId={id}
+              agendamentos={agendamentos ?? []}
+              planos={planos ?? []}
+            />
+          </TabsContent>
+
           <TabsContent value="historico">
             <Card className="border-border/60 p-6">
               <h2 className="font-display text-lg font-bold text-foreground">Histórico de agendamentos</h2>
@@ -180,6 +329,7 @@ function PacienteDetalhePage() {
                         <th className="hidden px-4 py-3 md:table-cell">Profissional</th>
                         <th className="px-4 py-3 text-right">Valor</th>
                         <th className="px-4 py-3">Status</th>
+                        <th className="px-4 py-3">Observações</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border/40">
@@ -202,6 +352,9 @@ function PacienteDetalhePage() {
                               {statusLabels[a.status] ?? a.status}
                             </span>
                           </td>
+                          <td className="px-4 py-3 text-xs text-muted-foreground">
+                            {a.observacoes ?? "—"}
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -213,6 +366,152 @@ function PacienteDetalhePage() {
 
           <TabsContent value="financeiro">
             <Card className="border-border/60 p-6">
+              <div className="flex items-center justify-between">
+                <h2 className="font-display text-lg font-bold text-foreground">Transações financeiras</h2>
+                <Dialog open={openNegociacao} onOpenChange={setOpenNegociacao}>
+                  <DialogTrigger asChild>
+                    <Button size="sm" className="gradient-primary shadow-glow font-semibold">
+                      <Plus className="mr-1.5 h-4 w-4" /> Nova negociação
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle className="flex items-center gap-2">
+                        <HandCoins className="h-5 w-5 text-primary" /> Registrar negociação
+                      </DialogTitle>
+                    </DialogHeader>
+                    <p className="text-sm text-muted-foreground">
+                      Registre o que foi fechado com a cliente na avaliação (valor, entrada e parcelas). O sistema gera as parcelas automaticamente.
+                    </p>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="mb-1 block text-sm font-medium">Descrição / Procedimento</label>
+                        <Input value={form.descricao} onChange={(e) => set("descricao", e.target.value)} placeholder="Ex: Limpeza de pele + clareamento" />
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="mb-1 block text-sm font-medium">Valor total (R$)</label>
+                          <Input type="number" value={form.valor_total} onChange={(e) => set("valor_total", e.target.value)} placeholder="0,00" />
+                        </div>
+                        <div>
+                          <label className="mb-1 block text-sm font-medium">Entrada (R$)</label>
+                          <Input type="number" value={form.entrada} onChange={(e) => set("entrada", e.target.value)} placeholder="0" />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="mb-1 block text-sm font-medium">Nº de parcelas</label>
+                          <Input type="number" value={form.num_parcelas} onChange={(e) => set("num_parcelas", e.target.value)} placeholder="1" />
+                        </div>
+                        <div>
+                          <label className="mb-1 block text-sm font-medium">Vencimento 1ª parcela</label>
+                          <Input type="date" value={form.vencimento} onChange={(e) => set("vencimento", e.target.value)} />
+                        </div>
+                      </div>
+                      <Button
+                        onClick={() => criarNegociacao.mutate()}
+                        disabled={criarNegociacao.isPending || !form.valor_total}
+                        className="w-full gradient-primary font-semibold"
+                      >
+                        {criarNegociacao.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Salvar negociação"}
+                      </Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </div>
+
+              {/* Planos/negociações do paciente */}
+              {(planos ?? []).length > 0 && (
+                <div className="mt-4 space-y-3">
+                  <h3 className="text-sm font-semibold text-muted-foreground">Negociações / Planos</h3>
+                  {(planos ?? []).map((plano) => (
+                    <div key={plano.id} className="rounded-lg border border-border/40 bg-muted/30 p-4">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div className="text-sm font-semibold">{plano.descricao || "Plano de pagamento"}</div>
+                        <div className="flex gap-3 text-sm">
+                          <span>Total: <b className="text-foreground">{formatBRL(Number(plano.valor_total))}</b></span>
+                          <span>Entrada: <b className="text-foreground">{formatBRL(Number(plano.entrada ?? 0))}</b></span>
+                          <span>{plano.num_parcelas}x</span>
+                          <span className={plano.status === "ativo" ? "text-success" : "text-muted-foreground"}>{plano.status}</span>
+                        </div>
+                      </div>
+                      {Array.isArray(plano.parcelas) && plano.parcelas.length > 0 && (
+                        <div className="mt-2 grid grid-cols-2 gap-1 sm:grid-cols-4">
+                          {(plano.parcelas as { numero: number; vencimento: string; valor: number; pago: number }[]).map((p) => (
+                            <div key={p.numero} className="rounded bg-card px-2 py-1 text-xs">
+                              <span className="text-muted-foreground">{p.numero}ª</span> {formatData(p.vencimento)} · <b>{formatBRL(Number(p.valor))}</b>
+                              {Number(p.pago) > 0 && <span className="ml-1 text-success">paga</span>}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Assinatura digital da negociação */}
+                      <div className="mt-3 border-t border-border/30 pt-3">
+                        {plano.assinatura_data && plano.assinatura_nome ? (
+                          <div className="flex items-center gap-3">
+                            <img
+                              src={plano.assinatura_data}
+                              alt="Assinatura da cliente"
+                              className="h-12 w-auto rounded border border-border/40 bg-white object-contain"
+                            />
+                            <div className="text-xs">
+                              <p className="font-semibold text-success">✓ Assinado</p>
+                              <p className="text-muted-foreground">{plano.assinatura_nome}</p>
+                              {plano.assinatura_em && (
+                                <p className="text-[10px] text-muted-foreground">
+                                  {new Date(plano.assinatura_em).toLocaleString("pt-BR")}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                            <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                              <PenLine className="h-3.5 w-3.5 text-primary" /> Aguardando assinatura da cliente
+                            </span>
+                            <div className="flex flex-wrap gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-8 text-[11px]"
+                                onClick={() => {
+                                  const href = `${window.location.origin}/assinatura/${plano.id}`;
+                                  navigator.clipboard?.writeText(href).catch(() => {});
+                                  toast.success("Link de assinatura copiado. Envie para a cliente!");
+                                }}
+                              >
+                                <PenLine className="mr-1 h-3.5 w-3.5 text-primary" /> Copiar link
+                              </Button>
+                              {paciente.telefone && (
+                                <a
+                                  href={`https://wa.me/${paciente.telefone.replace(/\D/g, "")}?text=${encodeURIComponent(
+                                    `Olá, ${paciente.nome.split(" ")[0]}! Clique aqui para assinar a sua negociação: ${window.location.origin}/assinatura/${plano.id}`
+                                  )}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-1 rounded-md bg-[#25D366] px-2.5 py-1 text-[11px] font-semibold text-white hover:opacity-90"
+                                >
+                                  Enviar WhatsApp
+                                </a>
+                              )}
+                              <a
+                                href={`/assinatura/${plano.id}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1 rounded-md border border-primary/30 bg-primary/10 px-2.5 py-1 text-[11px] font-semibold text-primary hover:bg-primary/20"
+                              >
+                                Abrir<ExternalLink className="h-3 w-3" />
+                              </a>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               <h2 className="font-display text-lg font-bold text-foreground">Transações financeiras</h2>
               {(transacoes ?? []).length === 0 ? (
                 <p className="mt-4 text-sm text-muted-foreground">
@@ -245,6 +544,47 @@ function PacienteDetalhePage() {
             </Card>
           </TabsContent>
         </Tabs>
+
+        {/* Dialog de edição do paciente */}
+        <Dialog open={openEdit} onOpenChange={setOpenEdit}>
+          <DialogContent className="sm:max-w-xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Editar paciente</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <label className="mb-1 block text-sm font-medium">Nome completo</label>
+                <Input value={editForm.nome} onChange={(e) => setEdit("nome", e.target.value)} className="h-11" />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="mb-1 block text-sm font-medium">Telefone</label>
+                  <Input value={editForm.telefone} onChange={(e) => setEdit("telefone", e.target.value)} className="h-11 font-mono" />
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm font-medium">E-mail</label>
+                  <Input type="email" value={editForm.email} onChange={(e) => setEdit("email", e.target.value)} className="h-11" />
+                </div>
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium">Endereço</label>
+                <Input value={editForm.endereco} onChange={(e) => setEdit("endereco", e.target.value)} className="h-11" />
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium">Observações</label>
+                <Input value={editForm.observacoes} onChange={(e) => setEdit("observacoes", e.target.value)} className="h-11" />
+              </div>
+              <Button
+                onClick={() => editMutation.mutate()}
+                disabled={editMutation.isPending || !editForm.nome.trim()}
+                className="gradient-primary w-full font-semibold"
+              >
+                {editMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Pencil className="mr-2 h-4 w-4" />}
+                Salvar alterações
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </ClinicLayout>
   );

@@ -18,6 +18,8 @@ import { supabaseAdmin } from "./lib/supabase/server";
 import { sendWhatsAppText } from "./lib/waha";
 import { criarClinica } from "./server-functions/api-clinicas";
 import { iniciarConexaoWhatsapp, statusConexaoWhatsapp, desconectarWhatsapp, setConexaoTenant, nomeSessaoClinica } from "./lib/supabase/whatsapp-connect";
+import { gerarMensagemIA } from "./lib/ia";
+import { criarDisparoA, listarDisparos, executarDevidos, cancelarDisparo } from "./lib/supabase/disparos-agendados";
 
 interface WahaPayload {
   from?: string;
@@ -197,6 +199,184 @@ async function handleWhatsappRoute(request: Request): Promise<Response> {
   }
 }
 
+// ============================================================
+// Assinatura digital da negociação — GET/POST /api/assinatura/:id
+// Página pública (a cliente assina pelo celular, sem login).
+// ============================================================
+function parseAssinaturaId(url: URL): string | null {
+  const m = url.pathname.match(/^\/api\/assinatura\/([^/]+)$/);
+  return m ? decodeURIComponent(m[1]) : null;
+}
+
+async function handleAssinaturaRoute(request: Request): Promise<Response> {
+  const url = new URL(request.url);
+  const id = parseAssinaturaId(url);
+  const json = (body: unknown, status = 200) =>
+    new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
+
+  if (!id) return json({ erro: "id inválido" }, 400);
+
+  try {
+    // GET — dados públicos do plano p/ exibir o resumo (paciente + procedimento + valor + parcelas)
+    if (request.method === "GET") {
+      const { data: plano, error } = await supabaseAdmin
+        .from("planos_pagamento")
+        .select("*, pacientes(nome), procedimentos(nome)")
+        .eq("id", id)
+        .maybeSingle();
+      if (error || !plano) return json({ erro: "Plano não encontrado" }, 404);
+      const { data: parcelas } = await supabaseAdmin.from("parcelas").select("numero, vencimento, valor, pago, status").eq("plano_id", id).order("numero");
+      return json({
+        id: plano.id,
+        descricao: plano.descricao,
+        valor_total: plano.valor_total,
+        entrada: plano.entrada,
+        num_parcelas: plano.num_parcelas,
+        paciente_nome: (plano.pacientes as { nome?: string } | null)?.nome ?? null,
+        procedimento_nome: (plano.procedimentos as { nome?: string } | null)?.nome ?? null,
+        status: plano.status,
+        assinado: Boolean(plano.assinatura_data && plano.assinatura_nome),
+        assinatura_nome: plano.assinatura_nome,
+        assinatura_em: plano.assinatura_em,
+        parcelas: parcelas ?? [],
+      });
+    }
+
+    // POST — recebe a assinatura (imagem base64 + nome) e grava no plano
+    if (request.method === "POST") {
+      const body = (await request.json().catch(() => ({}))) as { imagem?: string; nome?: string };
+      if (!body.imagem || !body.nome?.trim()) {
+        return json({ erro: "imagem e nome são obrigatórios" }, 400);
+      }
+      const nome = body.nome.trim().slice(0, 200);
+      const imagem = body.imagem.startsWith("data:") ? body.imagem : `data:image/png;base64,${body.imagem}`;
+      const { error } = await supabaseAdmin
+        .from("planos_pagamento")
+        .update({ assinatura_data: imagem, assinatura_nome: nome, assinatura_em: new Date().toISOString() })
+        .eq("id", id);
+      if (error) return json({ erro: `Erro ao salvar assinatura: ${error.message}` }, 500);
+      return json({ ok: true });
+    }
+
+    return json({ erro: "método não suportado" }, 405);
+  } catch (e) {
+    return json({ erro: String((e as Error).message ?? e) }, 500);
+  }
+}
+
+// ============================================================
+// Automações: geração de mensagem com IA + disparos agendados
+// POST /api/ia/gerar-mensagem     → gera texto com a IA
+// GET  /api/disparos              → lista disparos (master)
+// POST /api/disparos/agendar      → agenda um disparo
+// GET  /api/disparos/devidos      → processa disparos vencidos (cron)
+// POST /api/disparos/:id/cancelar → cancela um disparo
+// ============================================================
+const j = (body: unknown, status = 200) =>
+  new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
+
+// ============================================================
+// GET /api/tenant/:subdominio — branding público da clínica
+// (usado na página de login p/ exibir nome/cor do tenant)
+// Retorna só dados públicos (nome, cor) — service_role no servidor.
+// ============================================================
+async function handleTenantBySubdominio(request: Request): Promise<Response> {
+  const url = new URL(request.url);
+  const m = url.pathname.match(/^\/api\/tenant\/([^/]+)$/);
+  if (!m) return j({ erro: "subdomínio inválido" }, 400);
+  const sub = m[1].toLowerCase();
+
+  const { data, error } = await supabaseAdmin
+    .from("tenants")
+    .select("id, nome, cor_primaria, cor_segundaria, logo_url")
+    .eq("subdominio", sub)
+    .maybeSingle();
+  if (error || !data) return j({ erro: "clínica não encontrada" }, 404);
+
+  return j({
+    id: data.id,
+    nome: data.nome,
+    corPrimaria: data.cor_primaria,
+    corSegundaria: data.cor_segundaria,
+    logoUrl: data.logo_url,
+  });
+}
+
+async function handleGerarMensagem(request: Request): Promise<Response> {
+  try {
+    const body = (await request.json().catch(() => ({}))) as {
+      servico?: string;
+      clinica?: string;
+      publico?: string;
+      tom?: string;
+    };
+    if (!body.servico?.trim()) return j({ erro: "servico é obrigatório" }, 400);
+    const texto = await gerarMensagemIA({
+      servico: body.servico.trim(),
+      clinica: body.clinica,
+      publico: body.publico,
+      tom: body.tom,
+    });
+    return j({ texto });
+  } catch (e) {
+    return j({ erro: String((e as Error).message ?? e) }, 500);
+  }
+}
+
+async function handleDisparosRoute(request: Request): Promise<Response> {
+  const url = new URL(request.url);
+  const path = url.pathname;
+
+  try {
+    const idMatch = path.match(/^\/api\/disparos\/([^/]+)\/cancelar$/);
+    if (idMatch && request.method === "POST") {
+      await cancelarDisparo(idMatch[1]);
+      return j({ ok: true });
+    }
+
+    if (request.method === "POST" && path === "/api/disparos/agendar") {
+      const body = (await request.json().catch(() => ({}))) as {
+        nome?: string;
+        tenantId?: string;
+        mensagem?: string;
+        wahaSessao?: string;
+        contatos?: { telefone: string; nome?: string | null }[];
+        janela?: string | null;
+        horaAgendamento?: string | null;
+        mensagemIa?: boolean;
+      };
+      if (!body.nome || !body.tenantId || !body.mensagem || !body.contatos?.length || !body.wahaSessao) {
+        return j({ erro: "nome, tenantId, mensagem, contatos e wahaSessao são obrigatórios" }, 400);
+      }
+      const res = await criarDisparoA({
+        nome: body.nome,
+        tenantId: body.tenantId,
+        mensagem: body.mensagem,
+        wahaSessao: body.wahaSessao,
+        contatos: body.contatos,
+        janela: body.janela,
+        horaAgendamento: body.horaAgendamento,
+        mensagemIa: body.mensagemIa,
+      });
+      return j({ id: res.id, next_due: res.next_due }, 201);
+    }
+
+    if (request.method === "GET" && path === "/api/disparos/devidos") {
+      const res = await executarDevidos();
+      return j(res);
+    }
+
+    if (request.method === "GET" && path === "/api/disparos") {
+      const disparos = await listarDisparos();
+      return j({ data: disparos });
+    }
+
+    return j({ erro: "rota não encontrada" }, 404);
+  } catch (e) {
+    return j({ erro: String((e as Error).message ?? e) }, 500);
+  }
+}
+
 async function getServerEntry(): Promise<ServerEntry> {
   if (!serverEntryPromise) {
     serverEntryPromise = import("@tanstack/react-start/server-entry").then(
@@ -247,6 +427,26 @@ export default {
     // WhatsApp da clínica — conexão por QR
     if (new URL(request.url).pathname.startsWith("/api/whatsapp/")) {
       return handleWhatsappRoute(request);
+    }
+
+    // Assinatura digital da negociação — público
+    if (new URL(request.url).pathname.startsWith("/api/assinatura/")) {
+      return handleAssinaturaRoute(request);
+    }
+
+    // Tenant por subdomínio — branding público (login)
+    if (request.method === "GET" && new URL(request.url).pathname.startsWith("/api/tenant/")) {
+      return handleTenantBySubdominio(request);
+    }
+
+    // IA — gera mensagem de venda (server-side, protege a API key)
+    if (request.method === "POST" && new URL(request.url).pathname === "/api/ia/gerar-mensagem") {
+      return handleGerarMensagem(request);
+    }
+
+    // Disparos agendados — criar/listar/executar/cancelar
+    if (new URL(request.url).pathname.startsWith("/api/disparos")) {
+      return handleDisparosRoute(request);
     }
 
     try {

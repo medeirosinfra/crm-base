@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { Users, Search, Plus, Loader2, Phone, Mail } from "lucide-react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { Users, Search, Plus, Loader2, Phone, Mail, FileText, Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ClinicLayout } from "@/components/layouts/clinic-layout";
@@ -15,7 +15,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { listPacientes, createPaciente } from "@/lib/supabase/tenants";
+import {
+  listPacientes,
+  createPaciente,
+  updatePaciente,
+  deletePaciente,
+  type Paciente,
+} from "@/lib/supabase/tenants";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/pacientes")({
@@ -53,10 +59,70 @@ function PacientesPage() {
       telefone: "", email: "", endereco: "", instagram: "", facebook: "", observacoes: "",
     });
 
+  // Edição: usa o paciente já carregado na listagem (sem nova busca),
+  // garantindo que os campos venham preenchidos.
+  const [openEdit, setOpenEdit] = useState(false);
+  const [editando, setEditando] = useState<Paciente | null>(null);
+  const abrirEdicao = (p: Paciente) => {
+    setEditando(p);
+    setForm({
+      nome: p.nome ?? "",
+      cpf: p.cpf ?? "",
+      rg: p.rg ?? "",
+      nascimento: p.nascimento ?? "",
+      genero: p.genero ?? "",
+      telefone: p.telefone ?? "",
+      email: p.email ?? "",
+      endereco: p.endereco ?? "",
+      instagram: p.instagram ?? "",
+      facebook: p.facebook ?? "",
+      observacoes: p.observacoes ?? "",
+    });
+    setOpenEdit(true);
+  };
+  const updateMutation = useMutation({
+    mutationFn: () =>
+      updatePaciente(editando!.id, {
+        nome: form.nome,
+        cpf: form.cpf || null,
+        rg: form.rg || null,
+        nascimento: form.nascimento || null,
+        genero: form.genero || null,
+        telefone: form.telefone || null,
+        email: form.email || null,
+        endereco: form.endereco || null,
+        instagram: form.instagram || null,
+        facebook: form.facebook || null,
+        observacoes: form.observacoes || null,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["pacientes"] });
+      toast.success("Paciente atualizado!");
+      setOpenEdit(false);
+      setEditando(null);
+      limparForm();
+    },
+    onError: (e) => toast.error(String(e)),
+  });
+
   const { data: pacientes, isLoading } = useQuery({
     queryKey: ["pacientes"],
     queryFn: listPacientes,
   });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => deletePaciente(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["pacientes"] });
+      toast.success("Paciente excluído!");
+    },
+    onError: (e) => toast.error(String(e)),
+  });
+
+  const handleExcluir = (p: Paciente) => {
+    if (!confirm(`Excluir o paciente "${p.nome}"? Esta ação não pode ser desfeita.`)) return;
+    deleteMutation.mutate(p.id);
+  };
 
   const createMutation = useMutation({
     mutationFn: () =>
@@ -181,6 +247,78 @@ function PacientesPage() {
               </div>
             </DialogContent>
           </Dialog>
+
+          {/* Dialog de edição do paciente */}
+          <Dialog open={openEdit} onOpenChange={setOpenEdit}>
+            <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Editar paciente</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <Label className="text-xs font-semibold uppercase tracking-widest text-primary">Identificação</Label>
+                  <div className="mt-2 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div className="sm:col-span-2">
+                      <Input value={form.nome} onChange={(e) => set("nome", e.target.value)} placeholder="Nome completo *" className="h-11" />
+                    </div>
+                    <div>
+                      <Input value={form.cpf} onChange={(e) => set("cpf", e.target.value)} placeholder="CPF" className="h-11 font-mono" />
+                    </div>
+                    <div>
+                      <Input value={form.rg} onChange={(e) => set("rg", e.target.value)} placeholder="RG" className="h-11 font-mono" />
+                    </div>
+                    <div>
+                      <Input type="date" value={form.nascimento} onChange={(e) => set("nascimento", e.target.value)} placeholder="Nascimento" className="h-11" />
+                    </div>
+                    <div>
+                      <Input value={form.genero} onChange={(e) => set("genero", e.target.value)} placeholder="Gênero" className="h-11" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="border-t border-border/60 pt-4">
+                  <Label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Contato</Label>
+                  <div className="mt-2 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div>
+                      <Input value={form.telefone} onChange={(e) => set("telefone", e.target.value)} placeholder="Telefone (com DDD)" className="h-11 font-mono" />
+                    </div>
+                    <div>
+                      <Input type="email" value={form.email} onChange={(e) => set("email", e.target.value)} placeholder="E-mail" className="h-11" />
+                    </div>
+                    <div className="sm:col-span-2">
+                      <Input value={form.endereco} onChange={(e) => set("endereco", e.target.value)} placeholder="Endereço completo" className="h-11" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="border-t border-border/60 pt-4">
+                  <Label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Redes sociais</Label>
+                  <div className="mt-2 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div>
+                      <Input value={form.instagram} onChange={(e) => set("instagram", e.target.value)} placeholder="@instagram" className="h-11" />
+                    </div>
+                    <div>
+                      <Input value={form.facebook} onChange={(e) => set("facebook", e.target.value)} placeholder="facebook.com/seuperfil" className="h-11" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="border-t border-border/60 pt-4">
+                  <Label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Observações</Label>
+                  <Input value={form.observacoes} onChange={(e) => set("observacoes", e.target.value)} placeholder="Alergias, restrições, anotações..." className="mt-2 h-11" />
+                </div>
+
+                <Button
+                  onClick={() => updateMutation.mutate()}
+                  disabled={updateMutation.isPending || !form.nome.trim()}
+                  className="gradient-primary w-full font-semibold"
+                >
+                  {updateMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Pencil className="mr-2 h-4 w-4" />}
+                  Salvar alterações
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
         </header>
 
         <div className="mt-8">
@@ -205,32 +343,39 @@ function PacientesPage() {
                   Nenhum paciente encontrado.
                 </div>
               )}
-              {filtered.map((p) => (
-                <Card key={p.id} className="group gradient-surface shadow-card border-border/60 p-5 transition-all hover:-translate-y-0.5 hover:border-primary/40">
+              {filtered.map((e) => (
+                <a
+                  key={e.id}
+                  href={`/pacientes/${e.id}`}
+                  className="group gradient-surface shadow-card border-border/60 block rounded-xl border bg-card p-5 text-card-foreground transition-all hover:-translate-y-0.5 hover:border-primary/40"
+                >
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
                       <div className="grid h-10 w-10 place-items-center rounded-full bg-primary/15 text-sm font-bold text-primary">
-                        {p.nome.charAt(0)}
+                        {e.nome.charAt(0)}
                       </div>
                       <div>
-                        <h3 className="font-display text-base font-bold text-foreground">{p.nome}</h3>
+                        <h3 className="font-display text-base font-bold text-foreground">{e.nome}</h3>
                         <p className="text-[11px] text-muted-foreground">
-                          Desde {new Date(p.created_at).toLocaleDateString("pt-BR")}
+                          Desde {new Date(e.created_at).toLocaleDateString("pt-BR")}
                         </p>
                       </div>
                     </div>
                   </div>
                   <div className="mt-4 flex items-center gap-3 border-t border-border/40 pt-3 text-xs text-muted-foreground">
                     <span className="flex items-center gap-1 font-mono">
-                      <Phone className="h-3.5 w-3.5 text-primary" /> {p.telefone ?? "—"}
+                      <Phone className="h-3.5 w-3.5 text-primary" /> {e.telefone ?? "—"}
                     </span>
-                    {p.email && (
+                    {e.email && (
                       <span className="flex items-center gap-1 truncate">
-                        <Mail className="h-3.5 w-3.5 text-primary" /> {p.email}
+                        <Mail className="h-3.5 w-3.5 text-primary" /> {e.email}
                       </span>
                     )}
                   </div>
-                </Card>
+                  <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] font-semibold text-primary">
+                    Abrir dados do paciente <FileText className="h-3 w-3" />
+                  </p>
+                </a>
               ))}
             </div>
           )}

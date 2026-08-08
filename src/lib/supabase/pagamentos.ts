@@ -17,6 +17,9 @@ export interface PlanoPagamento {
   vencimento: string;
   forma_pagamento: string | null;
   status: "ativo" | "quitado" | "cancelado";
+  assinatura_data: string | null;
+  assinatura_nome: string | null;
+  assinatura_em: string | null;
   created_at: string;
   updated_at: string;
 }

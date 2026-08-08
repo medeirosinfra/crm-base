@@ -35,6 +35,7 @@ import { Route as MasterClinicasRouteImport } from './routes/master/clinicas'
 import { Route as MasterBotsRouteImport } from './routes/master/bots'
 import { Route as MasterAutomacoesRouteImport } from './routes/master/automacoes'
 import { Route as MasterAnunciosRouteImport } from './routes/master/anuncios'
+import { Route as AssinaturaPlanoIdRouteImport } from './routes/assinatura.$planoId'
 
 const WhatsappRoute = WhatsappRouteImport.update({
   id: '/whatsapp',
@@ -166,6 +167,11 @@ const MasterAnunciosRoute = MasterAnunciosRouteImport.update({
   path: '/anuncios',
   getParentRoute: () => MasterRoute,
 } as any)
+const AssinaturaPlanoIdRoute = AssinaturaPlanoIdRouteImport.update({
+  id: '/assinatura/$planoId',
+  path: '/assinatura/$planoId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -185,6 +191,7 @@ export interface FileRoutesByFullPath {
   '/relatorios': typeof RelatoriosRoute
   '/setores': typeof SetoresRoute
   '/whatsapp': typeof WhatsappRoute
+  '/assinatura/$planoId': typeof AssinaturaPlanoIdRoute
   '/master/anuncios': typeof MasterAnunciosRoute
   '/master/automacoes': typeof MasterAutomacoesRoute
   '/master/bots': typeof MasterBotsRoute
@@ -212,6 +219,7 @@ export interface FileRoutesByTo {
   '/relatorios': typeof RelatoriosRoute
   '/setores': typeof SetoresRoute
   '/whatsapp': typeof WhatsappRoute
+  '/assinatura/$planoId': typeof AssinaturaPlanoIdRoute
   '/master/anuncios': typeof MasterAnunciosRoute
   '/master/automacoes': typeof MasterAutomacoesRoute
   '/master/bots': typeof MasterBotsRoute
@@ -241,6 +249,7 @@ export interface FileRoutesById {
   '/relatorios': typeof RelatoriosRoute
   '/setores': typeof SetoresRoute
   '/whatsapp': typeof WhatsappRoute
+  '/assinatura/$planoId': typeof AssinaturaPlanoIdRoute
   '/master/anuncios': typeof MasterAnunciosRoute
   '/master/automacoes': typeof MasterAutomacoesRoute
   '/master/bots': typeof MasterBotsRoute
@@ -271,6 +280,7 @@ export interface FileRouteTypes {
     | '/relatorios'
     | '/setores'
     | '/whatsapp'
+    | '/assinatura/$planoId'
     | '/master/anuncios'
     | '/master/automacoes'
     | '/master/bots'
@@ -298,6 +308,7 @@ export interface FileRouteTypes {
     | '/relatorios'
     | '/setores'
     | '/whatsapp'
+    | '/assinatura/$planoId'
     | '/master/anuncios'
     | '/master/automacoes'
     | '/master/bots'
@@ -326,6 +337,7 @@ export interface FileRouteTypes {
     | '/relatorios'
     | '/setores'
     | '/whatsapp'
+    | '/assinatura/$planoId'
     | '/master/anuncios'
     | '/master/automacoes'
     | '/master/bots'
@@ -355,6 +367,7 @@ export interface RootRouteChildren {
   RelatoriosRoute: typeof RelatoriosRoute
   SetoresRoute: typeof SetoresRoute
   WhatsappRoute: typeof WhatsappRoute
+  AssinaturaPlanoIdRoute: typeof AssinaturaPlanoIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -541,6 +554,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MasterAnunciosRouteImport
       parentRoute: typeof MasterRoute
     }
+    '/assinatura/$planoId': {
+      id: '/assinatura/$planoId'
+      path: '/assinatura/$planoId'
+      fullPath: '/assinatura/$planoId'
+      preLoaderRoute: typeof AssinaturaPlanoIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -599,6 +619,7 @@ const rootRouteChildren: RootRouteChildren = {
   RelatoriosRoute: RelatoriosRoute,
   SetoresRoute: SetoresRoute,
   WhatsappRoute: WhatsappRoute,
+  AssinaturaPlanoIdRoute: AssinaturaPlanoIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

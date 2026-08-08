@@ -17,6 +17,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
@@ -257,6 +258,21 @@ function AgendaPage() {
                   </div>
                 </div>
 
+                <div>
+                  <Label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                    Observações para a Dra
+                  </Label>
+                  <Textarea
+                    value={form.observacoes}
+                    onChange={(e) => setForm((f) => ({ ...f, observacoes: e.target.value }))}
+                    placeholder="Ex: dente 36 — restauração prevista; paciente com sensibilidade no dente 47"
+                    className="mt-1.5 min-h-[72px] resize-y"
+                  />
+                  <p className="mt-1 text-[11px] text-muted-foreground">
+                    Anote o dente/procedimento previsto para este agendamento.
+                  </p>
+                </div>
+
                 <Button type="submit" disabled={createMutation.isPending} className="gradient-primary w-full font-semibold">
                   {createMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Plus className="mr-2 h-4 w-4" />}
                   Criar agendamento
@@ -325,6 +341,13 @@ function AgendaPage() {
                                   {formatBRL(Number(a.valor))}
                                 </span>
                               )}
+                            </div>
+                          )}
+
+                          {a.observacoes && (
+                            <div className="mt-2 rounded-md border border-primary/20 bg-primary/5 px-2.5 py-1.5 text-[11px] leading-relaxed text-foreground/90">
+                              <span className="font-semibold text-primary">Observações: </span>
+                              {a.observacoes}
                             </div>
                           )}
 
