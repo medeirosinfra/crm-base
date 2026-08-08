@@ -68,7 +68,13 @@ function LoginPage() {
     // O useEffect acima redireciona quando o cargo carregar
   };
 
-  const titulo = clinica?.nome ?? (subdomain ? `Clínica ${subdomain}` : "MedeirosInfra");
+  // Título determinístico SSR == client (evita React hydration #418).
+  // O nome real da clínica pelo subdomínio só é aplicado DEPOIS de montar,
+  // para não divergir do HTML que o servidor envia (que não vê window).
+  const [titulo, setTitulo] = useState("MedeirosInfra");
+  useEffect(() => {
+    if (clinica?.nome) setTitulo(clinica.nome);
+  }, [clinica?.nome]);
 
   return (
     <div className="grid min-h-screen place-items-center bg-background px-4">
@@ -84,11 +90,6 @@ function LoginPage() {
           <p className="mt-1 text-sm text-muted-foreground">
             Entre para acessar seu painel de gestão
           </p>
-          {subdomain && !clinica && (
-            <p className="mt-1 text-[11px] text-muted-foreground/70">
-              subdomínio: {subdomain}
-            </p>
-          )}
         </div>
 
         <Card className="border-border/60 p-6">

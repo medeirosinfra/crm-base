@@ -44,9 +44,13 @@ export interface TransacaoPaciente {
 
 /** Busca detalhe do paciente. */
 export async function getPaciente(id: string): Promise<PacienteDetalhe | null> {
-  const { data, error } = await db.from("pacientes").select("*").eq("id", id).single();
+  const { data, error } = await db.from("pacientes").select("*").eq("id", id);
   if (error) return null;
-  return data as PacienteDetalhe;
+  // O proxy /supabase pode entregar o resultado como array mesmo com .single().
+  // Normaliza: primeiro elemento ou null.
+  const arr = data as PacienteDetalhe[] | PacienteDetalhe | null;
+  const p = Array.isArray(arr) ? arr[0] ?? null : arr;
+  return p as PacienteDetalhe | null;
 }
 
 /** Lista agendamentos do paciente (com procedimento e profissional). */

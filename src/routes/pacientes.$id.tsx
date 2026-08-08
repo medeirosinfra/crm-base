@@ -27,9 +27,6 @@ import { formatData, formatTelefone, formatBRL, formatHora } from "@/lib/formatt
 import { PatientFichaTab } from "@/components/contacts/patient-ficha-tab";
 
 export const Route = createFileRoute("/pacientes/$id")({
-  validateSearch: (search: Record<string, unknown>) => ({
-    tab: (search.tab as string) || "visao",
-  }),
   head: () => ({ meta: [{ title: "Detalhe do Paciente — MedeirosInfra" }] }),
   component: () => (
     <RequireClinic>
@@ -47,8 +44,9 @@ const statusLabels: Record<string, string> = {
 
 function PacienteDetalhePage() {
   const { id } = Route.useParams();
-  const search = Route.useSearch();
-  const defaultTab = search.tab || "visao";
+  const defaultTab = typeof window !== "undefined"
+    ? new URLSearchParams(window.location.search).get("tab") || "visao"
+    : "visao";
   const [activeTab, setActiveTab] = useState(defaultTab);
   const ensureTab = (val: string) => { setActiveTab(val); window.history.replaceState({}, "", `/pacientes/${id}?tab=${val}`); };
 
@@ -189,10 +187,10 @@ function PacienteDetalhePage() {
 
         <div className="mt-4 flex items-center gap-4">
           <div className="grid h-16 w-16 place-items-center rounded-2xl gradient-primary text-2xl font-bold text-primary-foreground shadow-glow">
-            {paciente.nome.charAt(0)}
+            {paciente.nome?.charAt(0) ?? "P"}
           </div>
           <div className="min-w-0 flex-1">
-            <h1 className="font-display text-3xl font-bold text-foreground truncate">{paciente.nome}</h1>
+            <h1 className="font-display text-3xl font-bold text-foreground truncate">{paciente.nome ?? "Paciente"}</h1>
             <div className="mt-1 flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
               <span className="flex items-center gap-1.5">
                 <Phone className="h-3.5 w-3.5 text-primary" /> {formatTelefone(paciente.telefone)}
@@ -486,7 +484,7 @@ function PacienteDetalhePage() {
                               {paciente.telefone && (
                                 <a
                                   href={`https://wa.me/${paciente.telefone.replace(/\D/g, "")}?text=${encodeURIComponent(
-                                    `Olá, ${paciente.nome.split(" ")[0]}! Clique aqui para assinar a sua negociação: ${window.location.origin}/assinatura/${plano.id}`
+                                    `Olá, ${paciente.nome?.split(" ")[0] ?? "cliente"}! Clique aqui para assinar a sua negociação: ${window.location.origin}/assinatura/${plano.id}`
                                   )}`}
                                   target="_blank"
                                   rel="noopener noreferrer"

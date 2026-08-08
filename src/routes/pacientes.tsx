@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { Users, Search, Plus, Loader2, Phone, Mail, FileText, Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -22,9 +22,12 @@ import {
   deletePaciente,
   type Paciente,
 } from "@/lib/supabase/tenants";
+import { formatData } from "@/lib/formatters";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/pacientes")({
+  // Autenticação/sessão são client-only (SSR renderiza spinner que diverge
+  // da árvore client → React hydration #418). Renderizamos no client apenas.
   head: () => ({
     meta: [{ title: "Pacientes — MedeirosInfra" }],
   }),
@@ -37,6 +40,10 @@ export const Route = createFileRoute("/pacientes")({
 
 function PacientesPage() {
   const queryClient = useQueryClient();
+  // Se estamos na rota filha /pacientes/$id, renderizamos o Outlet (detalhe),
+  // não a listagem. O pai só mostra a lista quando a URL não tem o id.
+  const routerState = useRouterState();
+  const isListing = routerState.matches[routerState.matches.length - 1]?.routeId === "/pacientes";
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({
@@ -153,6 +160,12 @@ function PacientesPage() {
       p.nome.toLowerCase().includes(search.toLowerCase()) ||
       (p.telefone ?? "").includes(search),
   );
+
+  if (!isListing) {
+    // Rota filha (detalhe do paciente): o próprio PacienteDetalhePage já
+    // renderiza o ClinicLayout, só expomos o Outlet sem aninhar outro layout.
+    return <Outlet />;
+  }
 
   return (
     <ClinicLayout>
@@ -357,7 +370,7 @@ function PacientesPage() {
                       <div>
                         <h3 className="font-display text-base font-bold text-foreground">{e.nome}</h3>
                         <p className="text-[11px] text-muted-foreground">
-                          Desde {new Date(e.created_at).toLocaleDateString("pt-BR")}
+                          Desde {formatData(e.created_at)}
                         </p>
                       </div>
                     </div>

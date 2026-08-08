@@ -20,27 +20,37 @@ export function formatBRLInt(value: number): string {
   }).format(value);
 }
 
-/** Formata data ISO (YYYY-MM-DD ou timestamptz) para pt-BR. */
+/**
+ * Formata data ISO (YYYY-MM-DD ou timestamptz) para pt-BR.
+ * IMPORTANTE: renderização determinística (sem toLocaleDateString/Intl,
+ * que dependem de timezone do ambiente) para garantir hidratação SSR == client
+ * e evitar o bug "React hydration #418" ao abrir páginas.
+ */
 export function formatData(iso: string | null | undefined, comHora = false): string {
   if (!iso) return "—";
   const d = new Date(iso);
   if (isNaN(d.getTime())) return "—";
-  const opts: Intl.DateTimeFormatOptions = comHora
-    ? { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }
-    : { day: "2-digit", month: "2-digit", year: "numeric" };
-  return d.toLocaleDateString("pt-BR", opts);
+  const dd = String(d.getUTCDate()).padStart(2, "0");
+  const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const yyyy = d.getUTCFullYear();
+  if (comHora) {
+    const hh = String(d.getUTCHours()).padStart(2, "0");
+    const mi = String(d.getUTCMinutes()).padStart(2, "0");
+    return `${dd}/${mm}/${yyyy} ${hh}:${mi}`;
+  }
+  return `${dd}/${mm}/${yyyy}`;
 }
 
-/** Formata data longa (ex: "segunda-feira, 2 de agosto"). */
+/** Formata data longa (ex: "02 de agosto"). Determinístico (UTC). */
+const MESES_LONGOS = [
+  "janeiro", "fevereiro", "março", "abril", "maio", "junho",
+  "julho", "agosto", "setembro", "outubro", "novembro", "dezembro",
+];
 export function formatDataLonga(iso: string | null | undefined): string {
   if (!iso) return "—";
   const d = new Date(iso);
   if (isNaN(d.getTime())) return "—";
-  return d.toLocaleDateString("pt-BR", {
-    weekday: "long",
-    day: "2-digit",
-    month: "long",
-  });
+  return `${String(d.getUTCDate()).padStart(2, "0")} de ${MESES_LONGOS[d.getUTCMonth()]}`;
 }
 
 /** Formata telefone (5511999999999 → (11) 99999-9999). */
@@ -56,10 +66,10 @@ export function formatTelefone(telefone: string | null | undefined): string {
   return telefone;
 }
 
-/** Extrai hora de um ISO (HH:mm). */
+/** Extrai hora de um ISO (HH:mm). Determinístico (UTC) p/ hidratação estável. */
 export function formatHora(iso: string | null | undefined): string {
   if (!iso) return "—";
   const d = new Date(iso);
   if (isNaN(d.getTime())) return "—";
-  return d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+  return `${String(d.getUTCHours()).padStart(2, "0")}:${String(d.getUTCMinutes()).padStart(2, "0")}`;
 }
