@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/lib/auth-context";
-import { getSubdomainFromHost, resolverTenantPorSubdominio } from "@/lib/tenant-resolver";
+import { getSubdomainFromHost, getSubdomainFromWindow, resolverTenantPorSubdominio } from "@/lib/tenant-resolver";
 import { applyTenantTheme } from "@/lib/theme";
 
 export const Route = createFileRoute("/login")({
@@ -21,7 +21,7 @@ export const Route = createFileRoute("/login")({
 
 function LoginPage() {
   const navigate = useNavigate();
-  const { signIn, user, isMaster, loading } = useAuth();
+  const { signIn, signOut, user, tenantId, isMaster, loading } = useAuth();
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -64,6 +64,27 @@ function LoginPage() {
     if (signInError) {
       setError(signInError);
       return;
+    }
+
+    // ---- SEGURANÇA: valida (PM) se o subdomínio acessado corresponde ao
+    // ---- tenant do usuário. Impede acesso cruzado entre clientes/ramos.
+    // ---- (o supabase já logou; agora checamos se o host bate com o perfil)
+    const subdomain = getSubdomainFromWindow();
+    if (subdomain) {
+      // Subdomínio de clínica: o usuário DEVE pertencer a essa clínica
+      const t = await resolverTenantPorSubdominio(subdomain);
+      if (!t) {
+        // Subdomínio que não existe → acesso negado
+        await signOut();
+        setError("Acesso negado: subdomínio inválido ou inativo.");
+        return;
+      }
+      // Se o usuário logado NÃO é super_admin e não pertence a esta clínica → recusa
+      if (!isMaster && tenantId && tenantId !== t.id) {
+        await signOut();
+        setError("Acesso negado: este login pertence a outra unidade.");
+        return;
+      }
     }
     // O useEffect acima redireciona quando o cargo carregar
   };
