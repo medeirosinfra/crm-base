@@ -20,6 +20,7 @@ export interface PlanoPagamento {
   assinatura_data: string | null;
   assinatura_nome: string | null;
   assinatura_em: string | null;
+  entrada_paga: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -70,7 +71,11 @@ export async function listPlanosPagamento(): Promise<PlanoComParcelas[]> {
   });
 }
 
-/** Cria um plano de pagamento gerando as parcelas automaticamente. */
+/**
+ * Cria um plano de pagamento gerando as parcelas automaticamente.
+ * Usa a rota do SERVIDOR (/api/planos/criar) com service_role —
+ * contorna qualquer falha de RLS/JWT do browser ao inserir parcelas.
+ */
 export async function criarPlanoPagamento(input: {
   paciente_id: string | null;
   procedimento_id?: string | null;
@@ -81,88 +86,57 @@ export async function criarPlanoPagamento(input: {
   vencimento: string;
   forma_pagamento?: string | null;
 }): Promise<PlanoComParcelas> {
-  const entrada = input.entrada ?? 0;
-  const numParcelas = Math.max(1, input.num_parcelas);
-
-  // Insere o plano
-  const { data: plano, error } = await supabase
-    .from("planos_pagamento")
-    .insert({
-      paciente_id: input.paciente_id,
-      procedimento_id: input.procedimento_id ?? null,
-      descricao: input.descricao ?? null,
-      valor_total: input.valor_total,
-      entrada,
-      num_parcelas: numParcelas,
-      vencimento: input.vencimento,
-      forma_pagamento: input.forma_pagamento ?? null,
-      status: "ativo",
-    })
-    .select()
-    .single();
-
-  if (error || !plano) throw new Error(`Erro ao criar plano: ${error?.message ?? "desconhecido"}`);
-
-  // Calcula o valor de cada parcela (o restante dividido pelo nº de parcelas)
-  const restante = Math.max(Number(input.valor_total) - entrada, 0);
-  const valorParcela = Math.round((restante / numParcelas) * 100) / 100;
-
-  // Ajusta a última parcela para a diferença de arredondamento
-  const parcelas = Array.from({ length: numParcelas }, (_, i) => {
-    const venc = new Date(input.vencimento);
-    venc.setMonth(venc.getMonth() + i);
-    const valor = i === numParcelas - 1 ? restante - valorParcela * (numParcelas - 1) : valorParcela;
-    return {
-      plano_id: plano.id,
-      tenant_id: plano.tenant_id,
-      numero: i + 1,
-      vencimento: venc.toISOString().slice(0, 10),
-      valor: Math.round(valor * 100) / 100,
-      pago: 0,
-      status: "pendente" as const,
-    };
+  const base = typeof window !== "undefined" ? window.location.origin : "";
+  const res = await fetch(`${base}/api/planos/criar`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(input),
   });
 
-  const { error: pErr } = await supabase.from("parcelas").insert(parcelas);
-  if (pErr) {
-    // Rollback do plano
-    await supabase.from("planos_pagamento").delete().eq("id", plano.id);
-    throw new Error(`Erro ao gerar parcelas: ${pErr.message}`);
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data?.erro ?? `Erro ao criar plano (${res.status})`);
   }
 
-  return { ...plano, parcelas, paciente_nome: null, procedimento_nome: null, total_pago: 0, restante };
+  // Monta o retorno no mesmo formato de antes (lista de parcelas salvas no banco)
+  const { id } = data as { id: string };
+  const { data: plano } = await supabase
+    .from("planos_pagamento")
+    .select("*")
+    .eq("id", id)
+    .single();
+  if (!plano) throw new Error("Plano criado mas não localizado");
+
+  const { data: parcelas } = await supabase.from("parcelas").select("*").eq("plano_id", id);
+  const arr = (parcelas ?? []) as Parcela[];
+
+  return {
+    ...(plano as unknown as PlanoPagamento),
+    parcelas: arr,
+    paciente_nome: null,
+    procedimento_nome: null,
+    total_pago: arr.reduce((s, p) => s + Number(p.pago), 0),
+    restante: Math.max(Number(plano.valor_total) - arr.reduce((s, p) => s + Number(p.pago), 0), 0),
+  };
 }
 
-/** Registra um pagamento (parcial ou total) de uma parcela. */
+/**
+ * Registra um pagamento (parcial ou total) de uma parcela.
+ * Usa a rota do SERVIDOR (/api/planos/pagar-parcela) com service_role —
+ * atualiza parcelas.pago + registra a receita, sem depender de RLS/JWT.
+ */
 export async function registrarPagamentoParcela(
   parcelaId: string,
   valorPago: number,
 ): Promise<void> {
-  if (!valorPago || valorPago <= 0) throw new Error("Valor do pagamento inválido");
-
-  const { data: parcela, error } = await supabase
-    .from("parcelas")
-    .select("*")
-    .eq("id", parcelaId)
-    .single();
-  if (error || !parcela) throw new Error(`Erro ao buscar parcela: ${error?.message}`);
-
-  const valor = Number(parcela.valor);
-  const novoPago = Math.min(Number(parcela.pago) + valorPago, valor);
-  const status = novoPago >= valor ? "pago" : "parcial";
-
-  const { error: uErr } = await supabase
-    .from("parcelas")
-    .update({ pago: novoPago, status, pago_em: new Date().toISOString().slice(0, 10) })
-    .eq("id", parcelaId);
-  if (uErr) throw new Error(`Erro ao registrar pagamento: ${uErr.message}`);
-
-  // Se a parcela foi totalmente paga, registra transação financeira (receita)
-  if (status === "pago") {
-    await registrarReceita(parcela.tenant_id, valorPago > 0 ? novoPago - Number(parcela.pago) : novoPago, parcela);
-  } else if (valorPago > 0) {
-    await registrarReceita(parcela.tenant_id, valorPago, parcela);
-  }
+  const base = typeof window !== "undefined" ? window.location.origin : "";
+  const res = await fetch(`${base}/api/planos/pagar-parcela`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ parcela_id: parcelaId, valor: Number(valorPago) || 0 }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data?.erro ?? `Erro ao registrar pagamento (${res.status})`);
 }
 
 /** Registra a receita no financeiro. */
@@ -184,6 +158,37 @@ async function registrarReceita(tenantId: string, valor: number, parcela: Parcel
   });
 }
 
+/** Registra a receita da ENTRADA no financeiro. */
+async function registrarReceitaEntrada(tenantId: string, valor: number, planoId: string) {
+  const { data: plano } = await supabase
+    .from("planos_pagamento")
+    .select("descricao")
+    .eq("id", planoId)
+    .single();
+
+  await supabase.from("transacoes_financeiras").insert({
+    tenant_id: tenantId,
+    descricao: `Entrada${plano?.descricao ? ` — ${plano.descricao}` : ""}`,
+    valor,
+    tipo: "receita",
+    data: new Date().toISOString().slice(0, 10),
+    status: "pago",
+    paciente_id: null,
+  });
+}
+
+/** Marca a entrada de um plano como paga e registra a receita no financeiro. */
+export async function marcarEntradaPaga(planoId: string): Promise<void> {
+  const base = typeof window !== "undefined" ? window.location.origin : "";
+  const res = await fetch(`${base}/api/planos/pagar-entrada`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ plano_id: planoId }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data?.erro ?? `Erro ao registrar entrada (${res.status})`);
+}
+
 /** Cancela um plano (e suas parcelas pendentes). */
 export async function cancelarPlano(id: string): Promise<void> {
   const { error } = await supabase
@@ -191,4 +196,13 @@ export async function cancelarPlano(id: string): Promise<void> {
     .update({ status: "cancelado" })
     .eq("id", id);
   if (error) throw new Error(`Erro ao cancelar plano: ${error.message}`);
+}
+
+/** Exclui permanentemente um plano de pagamento e suas parcelas. */
+export async function deletarPlano(id: string): Promise<void> {
+  const { error } = await supabase
+    .from("planos_pagamento")
+    .delete()
+    .eq("id", id);
+  if (error) throw new Error(`Erro ao excluir plano: ${error.message}`);
 }

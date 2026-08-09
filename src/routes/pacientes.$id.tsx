@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Users, Wallet, CalendarDays, Loader2, Phone, Mail, Scissors, HandCoins, Plus, PenLine, ExternalLink, ClipboardList, Pencil, Trash2 } from "lucide-react";
+import { ArrowLeft, Users, Wallet, CalendarDays, Loader2, Phone, Mail, Scissors, HandCoins, Plus, ClipboardList, Pencil, Trash2, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { ClinicLayout } from "@/components/layouts/clinic-layout";
 import { RequireClinic } from "@/components/require-clinic";
@@ -21,7 +21,7 @@ import {
   listAgendamentosDoPaciente,
   listTransacoesDoPaciente,
 } from "@/lib/supabase/pacientes";
-import { listPlanosPagamento, criarPlanoPagamento } from "@/lib/supabase/pagamentos";
+import { listPlanosPagamento, criarPlanoPagamento, deletarPlano, marcarEntradaPaga, registrarPagamentoParcela, type Parcela } from "@/lib/supabase/pagamentos";
 import { updatePaciente, deletePaciente, type Paciente } from "@/lib/supabase/tenants";
 import { formatData, formatTelefone, formatBRL, formatHora } from "@/lib/formatters";
 import { PatientFichaTab } from "@/components/contacts/patient-ficha-tab";
@@ -132,6 +132,36 @@ function PacienteDetalhePage() {
   const set = (campo: keyof typeof form, valor: string) => setForm((f) => ({ ...f, [campo]: valor }));
   const queryClient = useQueryClient();
 
+  // Dialog de pagamento (entrada ou parcela) — permite valor parcial
+  const [pagamentoTarget, setPagamentoTarget] = useState<{
+    tipo: "entrada" | "parcela";
+    planoId?: string;
+    parcela?: Parcela;
+  } | null>(null);
+  const [valorPagamento, setValorPagamento] = useState("");
+
+  const abrirPagamento = (tipo: "entrada" | "parcela", planoId?: string, parcela?: Parcela) => {
+    setPagamentoTarget({ tipo, planoId, parcela });
+    if (tipo === "entrada") {
+      const plano = (planos ?? []).find((p) => p.id === planoId);
+      setValorPagamento(String(plano?.entrada ?? 0));
+    } else if (parcela) {
+      setValorPagamento(String(Number(parcela.valor) - Number(parcela.pago)));
+    }
+  };
+
+  const confirmarPagamento = () => {
+    const valor = parseFloat(valorPagamento.replace(",", ".")) || 0;
+    if (valor <= 0) { toast.error("Informe um valor válido."); return; }
+    if (pagamentoTarget?.tipo === "entrada") {
+      pagarEntradaMutation.mutate(pagamentoTarget.planoId!);
+    } else if (pagamentoTarget?.parcela) {
+      pagarParcelaMutation.mutate({ parcelaId: pagamentoTarget.parcela.id, valor });
+    }
+    setPagamentoTarget(null);
+    setValorPagamento("");
+  };
+
   const criarNegociacao = useMutation({
     mutationFn: () =>
       criarPlanoPagamento({
@@ -151,6 +181,37 @@ function PacienteDetalhePage() {
       setForm({ procedimento_id: "", descricao: "", valor_total: "", entrada: "0", num_parcelas: "1", vencimento: "" });
     },
     onError: (e) => toast.error(`Erro ao registrar: ${e.message}`),
+  });
+
+  const deletarNegociacao = useMutation({
+    mutationFn: (planoId: string) => deletarPlano(planoId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["pacientes", id, "planos"] });
+      queryClient.invalidateQueries({ queryKey: ["pacientes", id, "transacoes"] });
+      toast.success("Negociação excluída com sucesso!");
+    },
+    onError: (e) => toast.error(`Erro ao excluir: ${e.message}`),
+  });
+
+  const pagarEntradaMutation = useMutation({
+    mutationFn: (planoId: string) => marcarEntradaPaga(planoId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["pacientes", id, "planos"] });
+      queryClient.invalidateQueries({ queryKey: ["pacientes", id, "transacoes"] });
+      toast.success("Entrada marcada como recebida!");
+    },
+    onError: (e) => toast.error(`Erro ao marcar entrada: ${e.message}`),
+  });
+
+  const pagarParcelaMutation = useMutation({
+    mutationFn: ({ parcelaId, valor }: { parcelaId: string; valor: number }) =>
+      registrarPagamentoParcela(parcelaId, valor),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["pacientes", id, "planos"] });
+      queryClient.invalidateQueries({ queryKey: ["pacientes", id, "transacoes"] });
+      toast.success("Pagamento registrado!");
+    },
+    onError: (e) => toast.error(`Erro ao registrar pagamento: ${e.message}`),
   });
 
   const totalGasto = (transacoes ?? [])
@@ -406,6 +467,23 @@ function PacienteDetalhePage() {
                           <Input type="date" value={form.vencimento} onChange={(e) => set("vencimento", e.target.value)} />
                         </div>
                       </div>
+
+                      {/* Prévia automática do cálculo */}
+                      {parseFloat(form.valor_total) > 0 && (
+                        <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 text-xs space-y-1">
+                          <p className="font-semibold text-primary">Simulação do parcelamento:</p>
+                          <p className="text-foreground">
+                            Valor total: <b>{formatBRL(parseFloat(form.valor_total) || 0)}</b>
+                          </p>
+                          <p className="text-foreground">
+                            Entrada: <b>{formatBRL(parseFloat(form.entrada) || 0)}</b>
+                          </p>
+                          <p className="text-foreground">
+                            Restante: <b>{formatBRL(Math.max((parseFloat(form.valor_total) || 0) - (parseFloat(form.entrada) || 0), 0))}</b> divididos em <b>{form.num_parcelas || 1}x</b> de <b className="text-success">{formatBRL(Math.round(((Math.max((parseFloat(form.valor_total) || 0) - (parseFloat(form.entrada) || 0), 0)) / Math.max(1, parseInt(form.num_parcelas) || 1)) * 100) / 100)}</b>
+                          </p>
+                        </div>
+                      )}
+
                       <Button
                         onClick={() => criarNegociacao.mutate()}
                         disabled={criarNegociacao.isPending || !form.valor_total}
@@ -420,95 +498,178 @@ function PacienteDetalhePage() {
 
               {/* Planos/negociações do paciente */}
               {(planos ?? []).length > 0 && (
-                <div className="mt-4 space-y-3">
-                  <h3 className="text-sm font-semibold text-muted-foreground">Negociações / Planos</h3>
-                  {(planos ?? []).map((plano) => (
-                    <div key={plano.id} className="rounded-lg border border-border/40 bg-muted/30 p-4">
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <div className="text-sm font-semibold">{plano.descricao || "Plano de pagamento"}</div>
-                        <div className="flex gap-3 text-sm">
-                          <span>Total: <b className="text-foreground">{formatBRL(Number(plano.valor_total))}</b></span>
-                          <span>Entrada: <b className="text-foreground">{formatBRL(Number(plano.entrada ?? 0))}</b></span>
-                          <span>{plano.num_parcelas}x</span>
-                          <span className={plano.status === "ativo" ? "text-success" : "text-muted-foreground"}>{plano.status}</span>
-                        </div>
-                      </div>
-                      {Array.isArray(plano.parcelas) && plano.parcelas.length > 0 && (
-                        <div className="mt-2 grid grid-cols-2 gap-1 sm:grid-cols-4">
-                          {(plano.parcelas as { numero: number; vencimento: string; valor: number; pago: number }[]).map((p) => (
-                            <div key={p.numero} className="rounded bg-card px-2 py-1 text-xs">
-                              <span className="text-muted-foreground">{p.numero}ª</span> {formatData(p.vencimento)} · <b>{formatBRL(Number(p.valor))}</b>
-                              {Number(p.pago) > 0 && <span className="ml-1 text-success">paga</span>}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-
-                      {/* Assinatura digital da negociação */}
-                      <div className="mt-3 border-t border-border/30 pt-3">
-                        {plano.assinatura_data && plano.assinatura_nome ? (
-                          <div className="flex items-center gap-3">
-                            <img
-                              src={plano.assinatura_data}
-                              alt="Assinatura da cliente"
-                              className="h-12 w-auto rounded border border-border/40 bg-white object-contain"
-                            />
-                            <div className="text-xs">
-                              <p className="font-semibold text-success">✓ Assinado</p>
-                              <p className="text-muted-foreground">{plano.assinatura_nome}</p>
-                              {plano.assinatura_em && (
-                                <p className="text-[10px] text-muted-foreground">
-                                  {new Date(plano.assinatura_em).toLocaleString("pt-BR")}
-                                </p>
-                              )}
-                            </div>
+                <div className="mt-4 space-y-4">
+                  <h3 className="text-sm font-semibold text-muted-foreground">Planos de pagamento</h3>
+                  {(planos ?? []).map((plano) => {
+                    const parcelas = Array.isArray(plano.parcelas) ? (plano.parcelas as Parcela[]) : [];
+                    const entradaValor = Number(plano.entrada ?? 0);
+                    const pagoParcelas = parcelas.reduce((s, p) => s + Number(p.pago), 0);
+                    const pagoTotal = (plano.entrada_paga ? entradaValor : 0) + pagoParcelas;
+                    const total = Number(plano.valor_total);
+                    const restante = Math.max(total - pagoTotal, 0);
+                    const pct = total > 0 ? Math.min(100, Math.round((pagoTotal / total) * 100)) : 0;
+                    const parcelasPagas = parcelas.filter((p) => Number(p.pago) >= Number(p.valor)).length;
+                    return (
+                      <div key={plano.id} className="rounded-xl border border-border/40 bg-card p-4 shadow-sm">
+                        {/* Header */}
+                        <div className="flex flex-wrap items-start justify-between gap-2">
+                          <div>
+                            <h4 className="font-display text-base font-bold text-foreground">
+                              {plano.descricao || "Plano de pagamento"}
+                            </h4>
+                            <p className="mt-0.5 text-xs text-muted-foreground">
+                              {plano.num_parcelas}x de {formatBRL(total)} · Entrada {formatBRL(entradaValor ?? 0)}
+                            </p>
                           </div>
-                        ) : (
-                          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                            <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                              <PenLine className="h-3.5 w-3.5 text-primary" /> Aguardando assinatura da cliente
+                          <div className="flex items-center gap-2">
+                            <span className={`rounded-full border px-2.5 py-0.5 text-[10px] font-semibold ${plano.status === "ativo" ? "border-success/30 bg-success/10 text-success" : "text-muted-foreground border-border/40"}`}>
+                              {plano.status === "ativo" ? "Ativo" : plano.status}
                             </span>
-                            <div className="flex flex-wrap gap-2">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="h-8 text-[11px]"
-                                onClick={() => {
-                                  const href = `${window.location.origin}/assinatura/${plano.id}`;
-                                  navigator.clipboard?.writeText(href).catch(() => {});
-                                  toast.success("Link de assinatura copiado. Envie para a cliente!");
-                                }}
-                              >
-                                <PenLine className="mr-1 h-3.5 w-3.5 text-primary" /> Copiar link
-                              </Button>
-                              {paciente.telefone && (
-                                <a
-                                  href={`https://wa.me/${paciente.telefone.replace(/\D/g, "")}?text=${encodeURIComponent(
-                                    `Olá, ${paciente.nome?.split(" ")[0] ?? "cliente"}! Clique aqui para assinar a sua negociação: ${window.location.origin}/assinatura/${plano.id}`
-                                  )}`}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="inline-flex items-center gap-1 rounded-md bg-[#25D366] px-2.5 py-1 text-[11px] font-semibold text-white hover:opacity-90"
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                              disabled={deletarNegociacao.isPending}
+                              onClick={() => {
+                                if (confirm("Excluir este plano e suas parcelas?")) deletarNegociacao.mutate(plano.id);
+                              }}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
+                        </div>
+
+                        {/* Barra de progresso */}
+                        <div className="mt-3">
+                          <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+                            <span>{pct}% pago</span>
+                            <span>Pago: <b className="text-success">{formatBRL(pagoTotal)}</b> de <b className="text-foreground">{formatBRL(total)}</b></span>
+                          </div>
+                          <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-muted">
+                            <div className="h-full rounded-full bg-success transition-all" style={{ width: `${pct}%` }} />
+                          </div>
+                        </div>
+
+                        {/* Entrada + Parcelas grid */}
+                        <div className="mt-3 grid gap-3 lg:grid-cols-2">
+                          {/* Entrada */}
+                          <div className="rounded-lg border border-border/40 bg-muted/20 p-3">
+                            <div className="flex items-center justify-between gap-2">
+                              <div>
+                                <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Entrada</p>
+                                <p className="mt-0.5 text-lg font-bold text-foreground">{formatBRL(entradaValor)}</p>
+                              </div>
+                              {plano.entrada_paga ? (
+                                <span className="inline-flex items-center gap-1 rounded-full border border-success/30 bg-success/10 px-2.5 py-1 text-[11px] font-semibold text-success">
+                                  <CheckCircle2 className="h-3.5 w-3.5" /> Recebida
+                                </span>
+                              ) : (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-8 text-[11px] font-semibold text-success hover:bg-success/10"
+                                  onClick={() => abrirPagamento("entrada", plano.id)}
                                 >
-                                  Enviar WhatsApp
-                                </a>
+                                  <HandCoins className="mr-1 h-3.5 w-3.5" /> Receber
+                                </Button>
                               )}
-                              <a
-                                href={`/assinatura/${plano.id}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center gap-1 rounded-md border border-primary/30 bg-primary/10 px-2.5 py-1 text-[11px] font-semibold text-primary hover:bg-primary/20"
-                              >
-                                Abrir<ExternalLink className="h-3 w-3" />
-                              </a>
                             </div>
                           </div>
-                        )}
+
+                          {/* Parcelas */}
+                          <div className="rounded-lg border border-border/40 bg-muted/20 p-3">
+                            <div className="flex items-center justify-between">
+                              <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+                                Parcelas ({parcelasPagas}/{plano.num_parcelas} pagas)
+                              </p>
+                            </div>
+                            <div className="mt-2 space-y-1.5">
+                              {parcelas.length === 0 ? (
+                                <p className="text-xs text-muted-foreground">Nenhuma parcela gerada ainda.</p>
+                              ) : (
+                                parcelas.map((p) => {
+                                  const pago = Number(p.pago) >= Number(p.valor);
+                                  const restante = Number(p.valor) - Number(p.pago);
+                                  return (
+                                    <div key={p.numero} className="flex items-center justify-between gap-2 rounded-md border border-border/30 bg-card px-2.5 py-1.5">
+                                      <div className="min-w-0">
+                                        <p className="text-xs font-medium text-foreground">
+                                          {p.numero}ª · {formatData(p.vencimento)}
+                                        </p>
+                                        <p className={`text-xs ${pago ? "text-success" : "text-foreground"}`}>
+                                          {formatBRL(Number(p.valor))}
+                                          {pago && <span className="ml-1">✓ paga</span>}
+                                        </p>
+                                      </div>
+                                      {!pago && p.status !== "cancelado" ? (
+                                        <Button
+                                          size="sm"
+                                          variant="outline"
+                                          className="h-7 px-2 text-[11px] font-semibold text-success hover:bg-success/10"
+                                          disabled={pagarParcelaMutation.isPending}
+                                          onClick={() => abrirPagamento("parcela", undefined, p)}
+                                        >
+                                          <HandCoins className="mr-1 h-3 w-3" /> Receber
+                                        </Button>
+                                      ) : (
+                                        <span className="text-[11px] font-semibold text-success">
+                                          {restante > 0 ? `resta ${formatBRL(restante)}` : "Pago"}
+                                        </span>
+                                      )}
+                                    </div>
+                                  );
+                                })
+                              )}
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
+
+              {/* Dialog de pagamento (entrada ou parcela) */}
+              <Dialog open={!!pagamentoTarget} onOpenChange={(o) => !o && setPagamentoTarget(null)}>
+                <DialogContent className="sm:max-w-sm">
+                  <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2">
+                      <HandCoins className="h-5 w-5 text-primary" />
+                      {pagamentoTarget?.tipo === "entrada" ? "Receber entrada" : "Receber parcela"}
+                    </DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="mb-1 block text-sm font-medium">Valor recebido (R$)</label>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={valorPagamento}
+                        onChange={(e) => setValorPagamento(e.target.value)}
+                        placeholder="0,00"
+                        autoFocus
+                      />
+                      {pagamentoTarget?.parcela && (
+                        <p className="mt-1 text-[11px] text-muted-foreground">
+                          Parcela de {formatBRL(Number(pagamentoTarget.parcela.valor))} · já pago{" "}
+                          {formatBRL(Number(pagamentoTarget.parcela.pago))}
+                        </p>
+                      )}
+                    </div>
+                    <Button
+                      onClick={confirmarPagamento}
+                      disabled={pagarEntradaMutation.isPending || pagarParcelaMutation.isPending}
+                      className="w-full gradient-primary font-semibold"
+                    >
+                      {pagarEntradaMutation.isPending || pagarParcelaMutation.isPending ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        "Confirmar pagamento"
+                      )}
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
 
               <h2 className="font-display text-lg font-bold text-foreground">Transações financeiras</h2>
               {(transacoes ?? []).length === 0 ? (

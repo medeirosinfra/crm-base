@@ -20,6 +20,7 @@ import { criarClinica } from "./server-functions/api-clinicas";
 import { iniciarConexaoWhatsapp, statusConexaoWhatsapp, desconectarWhatsapp, setConexaoTenant, nomeSessaoClinica } from "./lib/supabase/whatsapp-connect";
 import { gerarMensagemIA } from "./lib/ia";
 import { criarDisparoA, listarDisparos, executarDevidos, cancelarDisparo } from "./lib/supabase/disparos-agendados";
+import { criarPlanoSrv, registrarPagamentoParcelaSrv, marcarEntradaSrv } from "./lib/supabase/planos-srv";
 
 interface WahaPayload {
   from?: string;
@@ -377,6 +378,68 @@ async function handleDisparosRoute(request: Request): Promise<Response> {
   }
 }
 
+// ============================================================
+// POST /api/planos/criar — cria plano de pagamento + parcelas
+// via service_role (bypass RLS) p/ nunca falhar no browser.
+// ============================================================
+async function handleCriarPlano(request: Request): Promise<Response> {
+  try {
+    const body = (await request.json().catch(() => ({}))) as {
+      paciente_id?: string | null;
+      procedimento_id?: string | null;
+      descricao?: string | null;
+      valor_total?: number;
+      entrada?: number;
+      num_parcelas?: number;
+      vencimento?: string;
+      forma_pagamento?: string | null;
+    };
+
+    if (!body.paciente_id) return j({ erro: "paciente_id é obrigatório" }, 400);
+    if (!body.valor_total || Number(body.valor_total) <= 0) return j({ erro: "valor_total é obrigatório" }, 400);
+    if (!body.vencimento) return j({ erro: "vencimento é obrigatório" }, 400);
+
+    const plano = await criarPlanoSrv({
+      paciente_id: body.paciente_id,
+      procedimento_id: body.procedimento_id ?? null,
+      descricao: body.descricao ?? null,
+      valor_total: Number(body.valor_total),
+      entrada: Number(body.entrada) || 0,
+      num_parcelas: Math.max(1, Number(body.num_parcelas) || 1),
+      vencimento: body.vencimento,
+      forma_pagamento: body.forma_pagamento ?? null,
+    });
+
+    return j({ ok: true, id: plano.id, parcelas: plano.parcelas.length }, 201);
+  } catch (e) {
+    return j({ erro: String((e as Error).message ?? e) }, 500);
+  }
+}
+
+// POST /api/planos/pagar-parcela — registra pagamento de parcela (service_role)
+async function handlePagarParcela(request: Request): Promise<Response> {
+  try {
+    const body = (await request.json().catch(() => ({}))) as { parcela_id?: string; valor?: number };
+    if (!body.parcela_id) return j({ erro: "parcela_id é obrigatório" }, 400);
+    const res = await registrarPagamentoParcelaSrv(body.parcela_id, Number(body.valor));
+    return j({ ok: true, ...res });
+  } catch (e) {
+    return j({ erro: String((e as Error).message ?? e) }, 500);
+  }
+}
+
+// POST /api/planos/pagar-entrada — marca entrada como paga (service_role)
+async function handlePagarEntrada(request: Request): Promise<Response> {
+  try {
+    const body = (await request.json().catch(() => ({}))) as { plano_id?: string };
+    if (!body.plano_id) return j({ erro: "plano_id é obrigatório" }, 400);
+    const res = await marcarEntradaSrv(body.plano_id);
+    return j({ ok: true, ...res });
+  } catch (e) {
+    return j({ erro: String((e as Error).message ?? e) }, 500);
+  }
+}
+
 async function getServerEntry(): Promise<ServerEntry> {
   if (!serverEntryPromise) {
     serverEntryPromise = import("@tanstack/react-start/server-entry").then(
@@ -447,6 +510,19 @@ export default {
     // Disparos agendados — criar/listar/executar/cancelar
     if (new URL(request.url).pathname.startsWith("/api/disparos")) {
       return handleDisparosRoute(request);
+    }
+
+    // Planos de pagamento — criar com parcelas via servidor (service_role)
+    if (request.method === "POST" && new URL(request.url).pathname === "/api/planos/criar") {
+      return handleCriarPlano(request);
+    }
+
+    // Planos de pagamento — registrar pagamento de parcela/entrada via servidor
+    if (request.method === "POST" && new URL(request.url).pathname === "/api/planos/pagar-parcela") {
+      return handlePagarParcela(request);
+    }
+    if (request.method === "POST" && new URL(request.url).pathname === "/api/planos/pagar-entrada") {
+      return handlePagarEntrada(request);
     }
 
     try {

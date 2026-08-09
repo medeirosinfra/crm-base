@@ -18,14 +18,16 @@ export const Route = createFileRoute("/master/")({
 });
 
 function MasterDashboard() {
-  const { data: totais, isLoading } = useQuery({ queryKey: ["master", "totais"], queryFn: getTotaisRelatorio });
-  const { data: tenants } = useQuery({ queryKey: ["tenants"], queryFn: listTenants });
+  const { data: tenants, isLoading } = useQuery({ queryKey: ["tenants"], queryFn: listTenants });
+
+  const clinicasAtivas = tenants?.filter((t) => t.status === "ativa")?.length ?? 0;
+  const clinicasInativas = (tenants?.length ?? 0) - clinicasAtivas;
 
   const stats = [
-    { label: "Clínicas Ativas", value: String(tenants?.length ?? 0), icon: Building2 },
-    { label: "Pacientes", value: String(totais?.pacientes ?? 0), icon: Users },
-    { label: "Receitas", value: formatBRLInt(totais?.receitas ?? 0), icon: Wallet },
-    { label: "Agendamentos", value: String(totais?.agendamentos ?? 0), icon: Scissors },
+    { label: "Clínicas Ativas", value: String(clinicasAtivas), icon: Building2 },
+    { label: "Clínicas Suspensas/Inativas", value: String(clinicasInativas), icon: Building2 },
+    { label: "Total de Clientes White-Label", value: String(tenants?.length ?? 0), icon: Users },
+    { label: "Módulos & Recurso IA", value: "Ativos", icon: Wallet },
   ];
 
   return (

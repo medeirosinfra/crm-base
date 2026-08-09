@@ -83,6 +83,15 @@ export async function criarClinica(data: CreateClinicBody) {
     throw new Error(`Erro ao criar funcionário: ${fErr.message}`);
   }
 
+  // 5. Seed de configuração padrão (procedimentos, categorias, setores) por segmento
+  //    Assim toda clínica nova (ex: Odonto) nasce JÁ configurada igual à Dra. Luana.
+  const seedErro = await seedConfiguracaoSegmento(tenant.id, data.especialidade);
+  if (seedErro) {
+    await supabaseAdmin.auth.admin.deleteUser(authUser.user.id);
+    await supabaseAdmin.from("tenants").delete().eq("id", tenant.id);
+    throw new Error(`Erro no seed de configuração: ${seedErro}`);
+  }
+
   return {
     tenant: {
       id: tenant.id,
@@ -97,4 +106,91 @@ export async function criarClinica(data: CreateClinicBody) {
       senha: data.adminSenha,
     },
   };
+}
+
+// ============================================================
+// Seed de configuração padrão por segmento.
+// Toda clínica nova nasce com procedimentos/categorias/setores
+// do segmento, idênticos à base usada pela Dra. Luana (odonto).
+// ============================================================
+
+const SEEDS: Record<string, { procedimentos: string[]; categorias: { nome: string; tipo: string }[]; setores: string[] }> = {
+  Odontologia: {
+    procedimentos: ["Restauração", "Extração", "Limpeza", "Clareamento", "Canal (Endodontia)", "Faceta", "Coroa", "Implante", "Ortodontia", "Preenchimento", "Botox"],
+    categorias: [
+      { nome: "Consultas", tipo: "receita" },
+      { nome: "Procedimentos", tipo: "receita" },
+      { nome: "Materiais", tipo: "despesa" },
+      { nome: "Equipamentos", tipo: "despesa" },
+      { nome: "Funcionários", tipo: "despesa" },
+    ],
+    setores: ["Recepção", "Clínica", "Cirúrgico", "Administrativo"],
+  },
+  "Harmonização Facial": {
+    procedimentos: ["Botox", "Preenchimento", "Fios de PDO", "Bioestimuladores", "Skinbooster", "Limpeza de pele", "Peeling químico"],
+    categorias: [
+      { nome: "Procedimentos", tipo: "receita" },
+      { nome: "Produtos", tipo: "despesa" },
+      { nome: "Consultas", tipo: "receita" },
+    ],
+    setores: ["Recepção", "Sala de Procedimentos", "Administrativo"],
+  },
+  Dermatologia: {
+    procedimentos: ["Consulta", "Exame de lesão", "Biópsia", "Crioterapia", "Cirurgia dermatológica"],
+    categorias: [
+      { nome: "Consultas", tipo: "receita" },
+      { nome: "Exames", tipo: "receita" },
+      { nome: "Procedimentos", tipo: "receita" },
+    ],
+    setores: ["Recepção", "Consultório", "Administrativo"],
+  },
+  Fisioterapia: {
+    procedimentos: ["Avaliação", "Sessão de fisioterapia", "RPG", "Pilates terapêutico", "Drenagem linfática"],
+    categorias: [
+      { nome: "Sessões", tipo: "receita" },
+      { nome: "Avaliações", tipo: "receita" },
+      { nome: "Equipamentos", tipo: "despesa" },
+    ],
+    setores: ["Recepção", "Sala de Atendimento", "Administrativo"],
+  },
+  Psicologia: {
+    procedimentos: ["Consulta", "Acompanhamento", "Avaliação psicológica", "Terapia de casal"],
+    categorias: [
+      { nome: "Consultas", tipo: "receita" },
+      { nome: "Avaliações", tipo: "receita" },
+    ],
+    setores: ["Recepção", "Consultório", "Administrativo"],
+  },
+};
+
+async function seedConfiguracaoSegmento(tenantId: string, especialidade: string): Promise<string | null> {
+  const seed = SEEDS[especialidade];
+  if (!seed) return null; // segmento sem seed → ok, clínica começa vazia
+
+  const { error: pErr } = await supabaseAdmin.from("procedimentos").insert(
+    seed.procedimentos.map((nome) => ({
+      tenant_id: tenantId,
+      nome,
+      preco: 0,
+      duracao_min: 30,
+      ativo: true,
+    })),
+  );
+  if (pErr) return `procedimentos: ${pErr.message}`;
+
+  const { error: cErr } = await supabaseAdmin.from("categorias_financeiras").insert(
+    seed.categorias.map((c) => ({
+      tenant_id: tenantId,
+      nome: c.nome,
+      tipo: c.tipo,
+    })),
+  );
+  if (cErr) return `categorias: ${cErr.message}`;
+
+  const { error: sErr } = await supabaseAdmin.from("setores").insert(
+    seed.setores.map((nome) => ({ tenant_id: tenantId, nome })),
+  );
+  if (sErr) return `setores: ${sErr.message}`;
+
+  return null;
 }

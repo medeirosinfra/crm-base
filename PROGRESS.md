@@ -240,3 +240,18 @@ CRM SaaS **white-label multi-tenant** para clínicas: 1 código, N clínicas, ca
 - **Fix "Failed to fetch"**: causa = browser chamava `https://crm.../supabase` de `draluana...` (cross-origin → CORS bloq). Correção: `src/lib/supabase/client.ts` usa `window.location.origin + /supabase` (mesma origem). JWT `iss` inalterado (localhost:54321) → login Luana + master preservados.
 - **Wildcard Cloudflare**: registro `Tunnel *.medeirossolucoestech.com.br → servidor casa` criado pelo dono. Clientes futuros ganham subdomínio automático.
 - **Dados**: 8 pacientes, 9 agendamentos intactos. crm master HTTP 200.
+
+## ✅ 08/08/2026 — RLS Financeiro resolvido + Pagamentos via servidor + Template Odonto
+- **Bug "dá erro mas adiciona"** (criar plano não gerava parcelas): causa = RLS no INSERT de `parcelas`/`transacoes_financeiras` + `current_tenant_id()` não lia `user_metadata.tenant_id` do JWT. Corrigido no banco (função + políticas `OR is_super_admin()`) E arquitetura: criação/pagamento movidos pro **servidor**.
+- **Rotas servidor novas** (service_role, bypass RLS/JWT instável do browser):
+  - `POST /api/planos/criar` (`planos-srv.ts` `criarPlanoSrv`) — resolve tenant pelo paciente, gera plano + parcelas (restante÷N, última ajusta arredondamento), rollback em falha.
+  - `POST /api/planos/pagar-parcela` (`registrarPagamentoParcelaSrv`) — atualiza `pago` + status + registra receita.
+  - `POST /api/planos/pagar-entrada` (`marcarEntradaSrv`) — marca `entrada_paga` + registra receita da entrada.
+  - Front `pagamentos.ts` (`criarPlanoPagamento`, `registrarPagamentoParcela`, `marcarEntradaPaga`) agora fazem `fetch` para essas rotas.
+- **UI financeira redesenhada (CRM de mercado)**:
+  - Simulação prévia no modal (calcula parcelas ao vivo: 1000 − 300 entrada → 4x 175).
+  - Barra de progresso % pago, entrada com badge recebida, parcelas com botão "Receber" e pagamento parcial.
+  - Assinatura digital REMOVIDA da UI (decisão dono 08/08).
+- **Seed de configuração por segmento** (`api-clinicas.ts`): ao criar clínica, `seedConfiguracaoSegmento` insere procedimentos + categorias financeiras + setores padrão do segmento. **Clínica Odontologia nova nasce igual à Dra. Luana** (validado: 11 proced, 5 categorias, 4 setores).
+- **Restauração de dados**: apaguei por engano planos "Frenectomia" (paciente Ana Luiza) na limpeza de órfãos; restaurados do backup. ⚠️ Regra: nunca deletar sem conferir `paciente_id`.
+- **Testes**: clínica odonto teste criada (201) com seed completo e depois removida.
