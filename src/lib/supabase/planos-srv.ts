@@ -1,4 +1,12 @@
 import { supabaseAdmin } from "./server";
+import { AuthError } from "../server-auth";
+
+function checarPosse(tenantIdDoRecurso: string | null | undefined, callerTenantId: string | null, isSuperAdmin: boolean) {
+  if (isSuperAdmin) return;
+  if (!callerTenantId || tenantIdDoRecurso !== callerTenantId) {
+    throw new AuthError("Esse recurso não pertence à sua clínica", 403);
+  }
+}
 
 // ============================================================
 // Planos de Pagamento via SERVIDOR (service_role)
@@ -19,7 +27,10 @@ export type CriarPlanoSrvInput = {
 };
 
 /** Cria o plano + todas as parcelas atômicamente (service_role). */
-export async function criarPlanoSrv(input: CriarPlanoSrvInput) {
+export async function criarPlanoSrv(
+  input: CriarPlanoSrvInput,
+  caller: { tenantId: string | null; isSuperAdmin: boolean },
+) {
   const entrada = input.entrada ?? 0;
   const numParcelas = Math.max(1, Math.floor(input.num_parcelas) || 1);
   const valorTotal = Number(input.valor_total) || 0;
@@ -34,6 +45,7 @@ export async function criarPlanoSrv(input: CriarPlanoSrvInput) {
   if (!input.paciente_id || !tenantId) {
     throw new Error("Paciente não encontrado ou sem clínica vinculada");
   }
+  checarPosse(tenantId, caller.tenantId, caller.isSuperAdmin);
 
   // 1) Plano — atribui tenant_id do paciente (service_role evita RLS)
   const { data: plano, error } = await supabaseAdmin
@@ -90,13 +102,14 @@ export async function criarPlanoSrv(input: CriarPlanoSrvInput) {
 // ============================================================
 
 /** Marca entrada como paga e registra a receita da entrada. */
-export async function marcarEntradaSrv(planoId: string) {
+export async function marcarEntradaSrv(planoId: string, caller: { tenantId: string | null; isSuperAdmin: boolean }) {
   const { data: plano, error } = await supabaseAdmin
     .from("planos_pagamento")
     .select("tenant_id, entrada, descricao")
     .eq("id", planoId)
     .single();
   if (error || !plano) throw new Error(`Erro ao buscar plano: ${error?.message ?? "desconhecido"}`);
+  checarPosse(plano.tenant_id, caller.tenantId, caller.isSuperAdmin);
 
   const { error: uErr } = await supabaseAdmin
     .from("planos_pagamento")
@@ -122,7 +135,11 @@ export async function marcarEntradaSrv(planoId: string) {
 }
 
 /** Registra pagamento (parcial ou total) de uma parcela + receita. */
-export async function registrarPagamentoParcelaSrv(parcelaId: string, valorPago: number) {
+export async function registrarPagamentoParcelaSrv(
+  parcelaId: string,
+  valorPago: number,
+  caller: { tenantId: string | null; isSuperAdmin: boolean },
+) {
   const valorInput = Math.round((Number(valorPago) || 0) * 100) / 100;
   if (!valorInput || valorInput <= 0) throw new Error("Valor do pagamento inválido");
 
@@ -132,6 +149,7 @@ export async function registrarPagamentoParcelaSrv(parcelaId: string, valorPago:
     .eq("id", parcelaId)
     .single();
   if (error || !parcela) throw new Error(`Erro ao buscar parcela: ${error?.message}`);
+  checarPosse(parcela.tenant_id, caller.tenantId, caller.isSuperAdmin);
 
   const pagoAtual = Number(parcela.pago) || 0;
   const valor = Number(parcela.valor) || 0;

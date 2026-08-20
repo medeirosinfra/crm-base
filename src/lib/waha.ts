@@ -1,10 +1,17 @@
 // ============================================================
 // Integração com WAHA (WhatsApp HTTP API)
 // Envio de mensagens via WAHA já rodando no servidor.
+//
+// IMPORTANTE: só pode ser importado por código server-only (server.ts e
+// server-functions/*). Usa process.env (nunca import.meta.env/VITE_*)
+// de propósito — se algum componente de página importar este arquivo,
+// o bundler não consegue inlinar a chave real no JS do navegador, e a
+// chamada simplesmente falha em vez de vazar a API key pra qualquer
+// visitante do site.
 // ============================================================
 
-const WAHA_BASE_URL = import.meta.env.VITE_WAHA_BASE_URL || "http://172.16.0.50:3000";
-const WAHA_API_KEY = import.meta.env.VITE_WAHA_API_KEY || "";
+const WAHA_BASE_URL = process.env.WAHA_BASE_URL_HTTP || "http://172.16.0.50:3000";
+const WAHA_API_KEY = process.env.WAHA_API_KEY || "";
 
 export interface SendTextResult {
   id: string;

@@ -9,8 +9,28 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { sendWhatsAppText, listWahaSessions } from "@/lib/waha";
+import { supabase } from "@/lib/supabase/client";
 import { toast } from "sonner";
+
+async function authHeaders(): Promise<HeadersInit> {
+  const { data } = await supabase.auth.getSession();
+  const token = data.session?.access_token;
+  return { "content-type": "application/json", ...(token ? { authorization: `Bearer ${token}` } : {}) };
+}
+
+async function statusPropriaSessao(): Promise<{ ok: boolean; status: string; numero?: string }> {
+  const headers = await authHeaders();
+  const res = await fetch("/api/whatsapp/status", { headers });
+  return res.json();
+}
+
+async function enviarMensagem(telefone: string, mensagem: string): Promise<{ id?: string }> {
+  const headers = await authHeaders();
+  const res = await fetch("/api/whatsapp/enviar", { method: "POST", headers, body: JSON.stringify({ telefone, mensagem }) });
+  const d = await res.json();
+  if (!res.ok) throw new Error(d.erro ?? "erro ao enviar");
+  return d;
+}
 
 export const Route = createFileRoute("/disparador")({
   head: () => ({
@@ -28,14 +48,13 @@ function DisparadorPage() {
   const [message, setMessage] = useState("");
   const [sending, setSending] = useState(false);
 
-  const { data: sessions } = useQuery({
-    queryKey: ["waha-sessions"],
-    queryFn: listWahaSessions,
+  const { data: minhaSessao } = useQuery({
+    queryKey: ["minha-sessao-waha"],
+    queryFn: statusPropriaSessao,
     refetchInterval: 30_000,
   });
 
-  const activeSessions = (sessions ?? []).filter((s) => s.status === "WORKING");
-  const defaultSession = activeSessions[0]?.name ?? "crmprincipal";
+  const conectado = minhaSessao?.ok === true || minhaSessao?.status === "WORKING";
 
   const handleSend = async () => {
     const digits = phone.replace(/\D/g, "");
@@ -50,8 +69,8 @@ function DisparadorPage() {
 
     setSending(true);
     try {
-      const result = await sendWhatsAppText(defaultSession, `${digits}@c.us`, message.trim());
-      toast.success(`Mensagem enviada! (${result.id?.slice(0, 20)}...)`);
+      const result = await enviarMensagem(digits, message.trim());
+      toast.success(`Mensagem enviada! (${result.id?.slice(0, 20) ?? ""}...)`);
       setMessage("");
       setPhone("");
     } catch (e) {
@@ -78,11 +97,9 @@ function DisparadorPage() {
             </p>
           </div>
 
-          <div className="flex items-center gap-2 rounded-full border border-success/30 bg-success/10 px-4 py-2 text-xs font-semibold text-success">
+          <div className={`flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-semibold ${conectado ? "border-success/30 bg-success/10 text-success" : "border-border/60 bg-muted/40 text-muted-foreground"}`}>
             <Radio className="h-3.5 w-3.5" />
-            {activeSessions.length > 0
-              ? `${activeSessions.length} sessão(ões) WAHA conectada(s)`
-              : "Nenhuma sessão WAHA ativa"}
+            {conectado ? "WhatsApp da clínica conectado" : "WhatsApp da clínica não conectado"}
           </div>
         </header>
 
@@ -136,42 +153,31 @@ function DisparadorPage() {
             </div>
           </Card>
 
-          {/* Status das sessões */}
+          {/* Status da sessão da clínica */}
           <Card className="border-border/60 p-6 lg:col-span-2">
-            <h2 className="font-display text-lg font-bold text-foreground">Sessões WhatsApp</h2>
+            <h2 className="font-display text-lg font-bold text-foreground">WhatsApp da clínica</h2>
             <p className="mt-1 text-xs text-muted-foreground">
-              Sessões conectadas no WAHA. Sessão usada:{" "}
-              <span className="font-semibold text-foreground">{defaultSession}</span>
+              Status da conexão configurada em "WhatsApp da Clínica".
             </p>
 
             <div className="mt-4 space-y-3">
-              {(sessions ?? []).length === 0 && (
-                <p className="text-sm text-muted-foreground">
-                  Nenhuma sessão encontrada no WAHA.
-                </p>
-              )}
-              {(sessions ?? []).map((s) => (
-                <div
-                  key={s.name}
-                  className="flex items-center justify-between rounded-lg border border-border/60 bg-card px-4 py-3"
-                >
-                  <div>
-                    <p className="text-sm font-semibold text-foreground">{s.name}</p>
-                    <p className="text-[11px] text-muted-foreground">
-                      {s.status === "WORKING"
-                        ? "Conectada e recebendo mensagens"
-                        : s.status === "SCAN_QR_CODE"
-                          ? "Aguardando QR code"
-                          : s.status}
-                    </p>
-                  </div>
-                  {s.status === "WORKING" ? (
-                    <CheckCircle2 className="h-5 w-5 text-success" />
-                  ) : (
-                    <XCircle className="h-5 w-5 text-muted-foreground" />
-                  )}
+              <div className="flex items-center justify-between rounded-lg border border-border/60 bg-card px-4 py-3">
+                <div>
+                  <p className="text-sm font-semibold text-foreground">{minhaSessao?.numero ?? "Sua clínica"}</p>
+                  <p className="text-[11px] text-muted-foreground">
+                    {conectado
+                      ? "Conectada e recebendo mensagens"
+                      : minhaSessao?.status === "SCAN_QR_CODE"
+                        ? "Aguardando QR code"
+                        : minhaSessao?.status ?? "desconectado"}
+                  </p>
                 </div>
-              ))}
+                {conectado ? (
+                  <CheckCircle2 className="h-5 w-5 text-success" />
+                ) : (
+                  <XCircle className="h-5 w-5 text-muted-foreground" />
+                )}
+              </div>
             </div>
 
             <p className="mt-6 rounded-lg border border-border/60 bg-muted/50 p-3 text-[11px] leading-relaxed text-muted-foreground">

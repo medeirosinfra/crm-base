@@ -5,6 +5,12 @@ import { supabase } from "./client";
 // Plano → N parcelas. Cada parcela controla pago/parcial/restante.
 // ============================================================
 
+async function authHeaders(): Promise<HeadersInit> {
+  const { data } = await supabase.auth.getSession();
+  const token = data.session?.access_token;
+  return { "content-type": "application/json", ...(token ? { authorization: `Bearer ${token}` } : {}) };
+}
+
 export interface PlanoPagamento {
   id: string;
   tenant_id: string;
@@ -89,7 +95,7 @@ export async function criarPlanoPagamento(input: {
   const base = typeof window !== "undefined" ? window.location.origin : "";
   const res = await fetch(`${base}/api/planos/criar`, {
     method: "POST",
-    headers: { "content-type": "application/json" },
+    headers: await authHeaders(),
     body: JSON.stringify(input),
   });
 
@@ -132,7 +138,7 @@ export async function registrarPagamentoParcela(
   const base = typeof window !== "undefined" ? window.location.origin : "";
   const res = await fetch(`${base}/api/planos/pagar-parcela`, {
     method: "POST",
-    headers: { "content-type": "application/json" },
+    headers: await authHeaders(),
     body: JSON.stringify({ parcela_id: parcelaId, valor: Number(valorPago) || 0 }),
   });
   const data = await res.json().catch(() => ({}));
@@ -182,7 +188,7 @@ export async function marcarEntradaPaga(planoId: string): Promise<void> {
   const base = typeof window !== "undefined" ? window.location.origin : "";
   const res = await fetch(`${base}/api/planos/pagar-entrada`, {
     method: "POST",
-    headers: { "content-type": "application/json" },
+    headers: await authHeaders(),
     body: JSON.stringify({ plano_id: planoId }),
   });
   const data = await res.json().catch(() => ({}));

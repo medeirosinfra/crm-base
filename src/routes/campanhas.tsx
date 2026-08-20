@@ -17,7 +17,6 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { listCampanhas, createCampanha, deleteCampanha } from "@/lib/supabase/procedimentos-campanhas";
-import { listWahaSessions } from "@/lib/waha";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/campanhas")({
@@ -44,19 +43,11 @@ function CampanhasPage() {
   const [open, setOpen] = useState(false);
   const [nome, setNome] = useState("");
   const [mensagem, setMensagem] = useState("");
-  const [sessao, setSessao] = useState("crmprincipal");
 
   const { data: campanhas, isLoading } = useQuery({
     queryKey: ["campanhas"],
     queryFn: listCampanhas,
   });
-
-  const { data: sessions } = useQuery({
-    queryKey: ["waha-sessions"],
-    queryFn: listWahaSessions,
-    refetchInterval: 30_000,
-  });
-  const activeSessions = (sessions ?? []).filter((s) => s.status === "WORKING");
 
   const createMutation = useMutation({
     mutationFn: () =>
@@ -64,7 +55,7 @@ function CampanhasPage() {
         nome,
         mensagem,
         status: "rascunho",
-        waha_sessao: sessao,
+        waha_sessao: null,
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["campanhas"] });
@@ -122,21 +113,10 @@ function CampanhasPage() {
                   <Textarea value={mensagem} onChange={(e) => setMensagem(e.target.value)} className="mt-1.5 min-h-[120px] text-sm" placeholder="Olá {nome}! Aqui é da clínica..." />
                   <p className="mt-1 text-[10px] text-muted-foreground">Use {'{nome}'} para personalizar com o nome do contato.</p>
                 </div>
-                <div>
-                  <Label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Sessão WhatsApp</Label>
-                  <select
-                    value={sessao}
-                    onChange={(e) => setSessao(e.target.value)}
-                    className="mt-1.5 h-11 w-full rounded-md border border-border/60 bg-card px-3 text-sm"
-                  >
-                    {(activeSessions.length > 0 ? activeSessions : [{ name: "crmprincipal" }]).map((s) => (
-                      <option key={s.name} value={s.name}>{s.name}</option>
-                    ))}
-                  </select>
-                  {activeSessions.length === 0 && (
-                    <p className="mt-1 text-[10px] text-warning">⚠️ Nenhuma sessão WAHA ativa.</p>
-                  )}
-                </div>
+                <p className="text-[11px] text-muted-foreground">
+                  O envio usa automaticamente o WhatsApp conectado da sua clínica (configure em
+                  "WhatsApp da Clínica" caso ainda não tenha conectado).
+                </p>
                 <Button
                   onClick={() => createMutation.mutate()}
                   disabled={createMutation.isPending || !nome.trim() || !mensagem.trim()}

@@ -8,9 +8,22 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { listWahaSessions } from "@/lib/waha";
+import { supabase } from "@/lib/supabase/client";
 import { listarContatosParaDisparo, dispararMensagens } from "@/lib/supabase/disparos";
 import { toast } from "sonner";
+
+async function authHeaders(): Promise<HeadersInit> {
+  const { data } = await supabase.auth.getSession();
+  const token = data.session?.access_token;
+  return { "content-type": "application/json", ...(token ? { authorization: `Bearer ${token}` } : {}) };
+}
+
+async function listWahaSessions(): Promise<{ name: string; status: string }[]> {
+  const headers = await authHeaders();
+  const res = await fetch("/api/whatsapp/sessoes", { headers });
+  if (!res.ok) return [];
+  return res.json();
+}
 
 export const Route = createFileRoute("/master/disparos")({
   head: () => ({

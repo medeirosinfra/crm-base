@@ -1,5 +1,6 @@
 import { supabaseAdmin } from "./server";
 import { dispararMensagens } from "./disparos";
+import { getTenantWahaSessao } from "./whatsapp-connect";
 
 // ============================================================
 // Disparos Agendados com IA (campanhas + campanha_contatos)
@@ -152,7 +153,10 @@ export async function executarDevidos(): Promise<{ executados: number }> {
     }
 
     try {
-      const sessao = campanha.waha_sessao ?? "crmprincipal";
+      // Sessão sempre derivada do tenant_id da própria campanha — nunca do
+      // valor gravado em waha_sessao, que pode ter vindo de um formulário
+      // que deixava escolher a sessão de outro tenant (campanhas.tsx).
+      const sessao = (await getTenantWahaSessao(campanha.tenant_id)) ?? campanha.waha_sessao ?? "crmprincipal";
       const res = await dispararMensagens(sessao, telefones, campanha.mensagem);
       await supabaseAdmin
         .from("campanhas")

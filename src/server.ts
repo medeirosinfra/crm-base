@@ -15,7 +15,7 @@ let serverEntryPromise: Promise<ServerEntry> | undefined;
 // (interceptado ANTES do router TanStack)
 // ============================================================
 import { supabaseAdmin } from "./lib/supabase/server";
-import { sendWhatsAppText } from "./lib/waha";
+import { sendWhatsAppText, listWahaSessions } from "./lib/waha";
 import { criarClinica } from "./server-functions/api-clinicas";
 import { iniciarConexaoWhatsapp, statusConexaoWhatsapp, desconectarWhatsapp, setConexaoTenant, nomeSessaoClinica, getTenantSlug, getTenantWahaSessao } from "./lib/supabase/whatsapp-connect";
 import { gerarMensagemIA } from "./lib/ia";
@@ -110,9 +110,14 @@ async function handleWahaWebhook(request: Request): Promise<Response> {
 // ============================================================
 // POST /api/clinicas — criar clínica com admin automático
 // (rota customizada que contorna o server-fn do TanStack no Docker)
+// Restrita a super_admin: cria um tenant novo + login admin dele.
 // ============================================================
 async function handleCreateClinica(request: Request): Promise<Response> {
   try {
+    const session = await resolveSessionTenant(request);
+    if (!session.isSuperAdmin) {
+      return new Response(JSON.stringify({ erro: "acesso restrito" }), { status: 403, headers: { "content-type": "application/json" } });
+    }
     const body = (await request.json().catch(() => ({}))) as {
       nome?: string;
       slug?: string;
@@ -149,6 +154,7 @@ async function handleCreateClinica(request: Request): Promise<Response> {
       headers: { "content-type": "application/json" },
     });
   } catch (e) {
+    if (e instanceof AuthError) return authErrorResponse(e);
     return new Response(JSON.stringify({ erro: String((e as Error).message ?? e) }), {
       status: 500,
       headers: { "content-type": "application/json" },
@@ -205,6 +211,28 @@ async function handleWhatsappRoute(request: Request): Promise<Response> {
       if (slug) await desconectarWhatsapp(slug);
       await setConexaoTenant(tenantId, false);
       return new Response(JSON.stringify({ ok: true }), { status: 200, headers: { "content-type": "application/json" } });
+    }
+
+    // /api/whatsapp/enviar — envio avulso pela clínica (Disparador). Sempre
+    // usa a sessão WAHA do próprio tenant do usuário logado.
+    if (request.method === "POST" && path === "/api/whatsapp/enviar") {
+      const body = (await request.json().catch(() => ({}))) as { telefone?: string; mensagem?: string; tenantId?: string };
+      if (!body.telefone || !body.mensagem?.trim()) {
+        return j({ erro: "telefone e mensagem são obrigatórios" }, 400);
+      }
+      const tenantId = resolveTargetTenantId(session, body.tenantId);
+      const wahaSessao = await getTenantWahaSessao(tenantId);
+      if (!wahaSessao) return j({ erro: "clínica sem WhatsApp configurado" }, 400);
+      const digits = body.telefone.replace(/\D/g, "");
+      const result = await sendWhatsAppText(wahaSessao, `${digits}@c.us`, body.mensagem.trim());
+      return j({ ok: true, id: result.id });
+    }
+
+    // /api/whatsapp/sessoes — lista todas as sessões WAHA (painel master). Exige super_admin.
+    if (request.method === "GET" && path === "/api/whatsapp/sessoes") {
+      if (!session.isSuperAdmin) return j({ erro: "acesso restrito" }, 403);
+      const sessions = await listWahaSessions();
+      return j(sessions);
     }
 
     return new Response(JSON.stringify({ erro: "rota não encontrada" }), { status: 404, headers: { "content-type": "application/json" } });
@@ -319,6 +347,9 @@ async function handleTenantBySubdominio(request: Request): Promise<Response> {
 
 async function handleGerarMensagem(request: Request): Promise<Response> {
   try {
+    // Exige sessão válida só para evitar abuso público da API paga de IA
+    // (qualquer usuário logado de qualquer clínica pode gerar mensagens).
+    await resolveSessionTenant(request);
     const body = (await request.json().catch(() => ({}))) as {
       servico?: string;
       clinica?: string;
@@ -334,6 +365,7 @@ async function handleGerarMensagem(request: Request): Promise<Response> {
     });
     return j({ texto });
   } catch (e) {
+    if (e instanceof AuthError) return authErrorResponse(e);
     return j({ erro: String((e as Error).message ?? e) }, 500);
   }
 }
@@ -418,6 +450,7 @@ async function handleDisparosRoute(request: Request): Promise<Response> {
 // ============================================================
 async function handleCriarPlano(request: Request): Promise<Response> {
   try {
+    const session = await resolveSessionTenant(request);
     const body = (await request.json().catch(() => ({}))) as {
       paciente_id?: string | null;
       procedimento_id?: string | null;
@@ -433,19 +466,23 @@ async function handleCriarPlano(request: Request): Promise<Response> {
     if (!body.valor_total || Number(body.valor_total) <= 0) return j({ erro: "valor_total é obrigatório" }, 400);
     if (!body.vencimento) return j({ erro: "vencimento é obrigatório" }, 400);
 
-    const plano = await criarPlanoSrv({
-      paciente_id: body.paciente_id,
-      procedimento_id: body.procedimento_id ?? null,
-      descricao: body.descricao ?? null,
-      valor_total: Number(body.valor_total),
-      entrada: Number(body.entrada) || 0,
-      num_parcelas: Math.max(1, Number(body.num_parcelas) || 1),
-      vencimento: body.vencimento,
-      forma_pagamento: body.forma_pagamento ?? null,
-    });
+    const plano = await criarPlanoSrv(
+      {
+        paciente_id: body.paciente_id,
+        procedimento_id: body.procedimento_id ?? null,
+        descricao: body.descricao ?? null,
+        valor_total: Number(body.valor_total),
+        entrada: Number(body.entrada) || 0,
+        num_parcelas: Math.max(1, Number(body.num_parcelas) || 1),
+        vencimento: body.vencimento,
+        forma_pagamento: body.forma_pagamento ?? null,
+      },
+      { tenantId: session.tenantId, isSuperAdmin: session.isSuperAdmin },
+    );
 
     return j({ ok: true, id: plano.id, parcelas: plano.parcelas.length }, 201);
   } catch (e) {
+    if (e instanceof AuthError) return authErrorResponse(e);
     return j({ erro: String((e as Error).message ?? e) }, 500);
   }
 }
@@ -453,11 +490,16 @@ async function handleCriarPlano(request: Request): Promise<Response> {
 // POST /api/planos/pagar-parcela — registra pagamento de parcela (service_role)
 async function handlePagarParcela(request: Request): Promise<Response> {
   try {
+    const session = await resolveSessionTenant(request);
     const body = (await request.json().catch(() => ({}))) as { parcela_id?: string; valor?: number };
     if (!body.parcela_id) return j({ erro: "parcela_id é obrigatório" }, 400);
-    const res = await registrarPagamentoParcelaSrv(body.parcela_id, Number(body.valor));
+    const res = await registrarPagamentoParcelaSrv(body.parcela_id, Number(body.valor), {
+      tenantId: session.tenantId,
+      isSuperAdmin: session.isSuperAdmin,
+    });
     return j({ ok: true, ...res });
   } catch (e) {
+    if (e instanceof AuthError) return authErrorResponse(e);
     return j({ erro: String((e as Error).message ?? e) }, 500);
   }
 }
@@ -465,11 +507,13 @@ async function handlePagarParcela(request: Request): Promise<Response> {
 // POST /api/planos/pagar-entrada — marca entrada como paga (service_role)
 async function handlePagarEntrada(request: Request): Promise<Response> {
   try {
+    const session = await resolveSessionTenant(request);
     const body = (await request.json().catch(() => ({}))) as { plano_id?: string };
     if (!body.plano_id) return j({ erro: "plano_id é obrigatório" }, 400);
-    const res = await marcarEntradaSrv(body.plano_id);
+    const res = await marcarEntradaSrv(body.plano_id, { tenantId: session.tenantId, isSuperAdmin: session.isSuperAdmin });
     return j({ ok: true, ...res });
   } catch (e) {
+    if (e instanceof AuthError) return authErrorResponse(e);
     return j({ erro: String((e as Error).message ?? e) }, 500);
   }
 }

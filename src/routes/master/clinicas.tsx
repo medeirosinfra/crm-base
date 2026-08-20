@@ -25,7 +25,14 @@ import {
   deleteTenant,
   type Tenant,
 } from "@/lib/supabase/tenants";
+import { supabase } from "@/lib/supabase/client";
 import { toast } from "sonner";
+
+async function authHeaders(): Promise<HeadersInit> {
+  const { data } = await supabase.auth.getSession();
+  const token = data.session?.access_token;
+  return { "content-type": "application/json", ...(token ? { authorization: `Bearer ${token}` } : {}) };
+}
 
 export const Route = createFileRoute("/master/clinicas")({
   head: () => ({
@@ -115,7 +122,7 @@ function ClinicasMaster() {
       // Criação com admin automático via rota customizada
       const resp = await fetch("/api/clinicas", {
         method: "POST",
-        headers: { "content-type": "application/json" },
+        headers: await authHeaders(),
         body: JSON.stringify({
           nome: form.nome,
           slug: form.slug || form.nome.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
