@@ -17,10 +17,11 @@ let serverEntryPromise: Promise<ServerEntry> | undefined;
 import { supabaseAdmin } from "./lib/supabase/server";
 import { sendWhatsAppText } from "./lib/waha";
 import { criarClinica } from "./server-functions/api-clinicas";
-import { iniciarConexaoWhatsapp, statusConexaoWhatsapp, desconectarWhatsapp, setConexaoTenant, nomeSessaoClinica } from "./lib/supabase/whatsapp-connect";
+import { iniciarConexaoWhatsapp, statusConexaoWhatsapp, desconectarWhatsapp, setConexaoTenant, nomeSessaoClinica, getTenantSlug, getTenantWahaSessao } from "./lib/supabase/whatsapp-connect";
 import { gerarMensagemIA } from "./lib/ia";
-import { criarDisparoA, listarDisparos, executarDevidos, cancelarDisparo } from "./lib/supabase/disparos-agendados";
+import { criarDisparoA, listarDisparos, executarDevidos, cancelarDisparo, getCampanhaTenantId } from "./lib/supabase/disparos-agendados";
 import { criarPlanoSrv, registrarPagamentoParcelaSrv, marcarEntradaSrv } from "./lib/supabase/planos-srv";
+import { resolveSessionTenant, resolveTargetTenantId, authErrorResponse, AuthError } from "./lib/server-auth";
 
 interface WahaPayload {
   from?: string;
@@ -159,43 +160,56 @@ async function handleCreateClinica(request: Request): Promise<Response> {
 // WhatsApp da Clínica — POST/GET /api/whatsapp/...
 // Conexão por QR: criar/iniciar sessão WAHA da clínica, obter QR,
 // checar status. Roda no servidor (não expõe API key do WAHA).
+//
+// Segurança: toda ação exige sessão válida (Bearer token) e o
+// slug/tenant SEMPRE é derivado do servidor a partir do usuário
+// autenticado — nunca confiar em slug/tenantId vindos do corpo da
+// requisição (um usuário de uma clínica não pode agir sobre o
+// WhatsApp de outra só por saber o subdomínio/tenantId dela).
 // ============================================================
 async function handleWhatsappRoute(request: Request): Promise<Response> {
   const url = new URL(request.url);
   const path = url.pathname; // ex: /api/whatsapp/conectar, /api/whatsapp/status
 
   try {
-    // /api/whatsapp/conectar?tenant=&slug=  (cria sessão e retorna QR)
+    const session = await resolveSessionTenant(request);
+
+    // /api/whatsapp/conectar  (cria sessão e retorna QR)
     if (request.method === "POST" && path === "/api/whatsapp/conectar") {
-      const body = (await request.json().catch(() => ({}))) as { slug?: string; tenantId?: string };
-      if (!body.slug || !body.tenantId) {
-        return new Response(JSON.stringify({ erro: "slug e tenantId obrigatórios" }), { status: 400, headers: { "content-type": "application/json" } });
-      }
-      const result = await iniciarConexaoWhatsapp(body.slug);
+      const body = (await request.json().catch(() => ({}))) as { tenantId?: string };
+      const tenantId = resolveTargetTenantId(session, body.tenantId);
+      const slug = await getTenantSlug(tenantId);
+      if (!slug) return new Response(JSON.stringify({ erro: "clínica não encontrada" }), { status: 404, headers: { "content-type": "application/json" } });
+
+      const result = await iniciarConexaoWhatsapp(slug);
       if (result.ok && result.status === "WORKING") {
-        await setConexaoTenant(body.tenantId, true);
+        await setConexaoTenant(tenantId, true);
       }
       return new Response(JSON.stringify(result), { status: result.ok ? 200 : 502, headers: { "content-type": "application/json" } });
     }
 
-    // /api/whatsapp/status?slug=X
+    // /api/whatsapp/status?tenantId=X (opcional, só para super_admin mirar outro tenant)
     if (request.method === "GET" && path === "/api/whatsapp/status") {
-      const slug = url.searchParams.get("slug") ?? "";
-      const tenantId = url.searchParams.get("tenantId") ?? "";
+      const tenantId = resolveTargetTenantId(session, url.searchParams.get("tenantId"));
+      const slug = await getTenantSlug(tenantId);
+      if (!slug) return new Response(JSON.stringify({ erro: "clínica não encontrada" }), { status: 404, headers: { "content-type": "application/json" } });
       const result = await statusConexaoWhatsapp(slug);
       return new Response(JSON.stringify(result), { status: 200, headers: { "content-type": "application/json" } });
     }
 
     // /api/whatsapp/desconectar
     if (request.method === "POST" && path === "/api/whatsapp/desconectar") {
-      const body = (await request.json().catch(() => ({}))) as { slug?: string; tenantId?: string };
-      if (body.slug) await desconectarWhatsapp(body.slug);
-      if (body.tenantId) await setConexaoTenant(body.tenantId, false);
+      const body = (await request.json().catch(() => ({}))) as { tenantId?: string };
+      const tenantId = resolveTargetTenantId(session, body.tenantId);
+      const slug = await getTenantSlug(tenantId);
+      if (slug) await desconectarWhatsapp(slug);
+      await setConexaoTenant(tenantId, false);
       return new Response(JSON.stringify({ ok: true }), { status: 200, headers: { "content-type": "application/json" } });
     }
 
     return new Response(JSON.stringify({ erro: "rota não encontrada" }), { status: 404, headers: { "content-type": "application/json" } });
   } catch (e) {
+    if (e instanceof AuthError) return authErrorResponse(e);
     return new Response(JSON.stringify({ erro: String((e as Error).message ?? e) }), { status: 500, headers: { "content-type": "application/json" } });
   }
 }
@@ -268,10 +282,10 @@ async function handleAssinaturaRoute(request: Request): Promise<Response> {
 // ============================================================
 // Automações: geração de mensagem com IA + disparos agendados
 // POST /api/ia/gerar-mensagem     → gera texto com a IA
-// GET  /api/disparos              → lista disparos (master)
-// POST /api/disparos/agendar      → agenda um disparo
-// GET  /api/disparos/devidos      → processa disparos vencidos (cron)
-// POST /api/disparos/:id/cancelar → cancela um disparo
+// GET  /api/disparos              → lista disparos (master, exige super_admin)
+// POST /api/disparos/agendar      → agenda um disparo (exige sessão; tenant sempre o do usuário)
+// GET  /api/disparos/devidos      → processa disparos vencidos (cron, exige segredo)
+// POST /api/disparos/:id/cancelar → cancela um disparo (exige sessão dona da campanha)
 // ============================================================
 const j = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
@@ -329,8 +343,28 @@ async function handleDisparosRoute(request: Request): Promise<Response> {
   const path = url.pathname;
 
   try {
+    // Job de cron (processa disparos vencidos de TODOS os tenants) — não é
+    // ação de um usuário, exige segredo compartilhado em vez de sessão.
+    if (request.method === "GET" && path === "/api/disparos/devidos") {
+      const secret = request.headers.get("x-cron-secret") ?? url.searchParams.get("secret");
+      const expected = process.env.CRON_SECRET;
+      if (!expected || secret !== expected) {
+        return j({ erro: "não autorizado" }, 401);
+      }
+      const res = await executarDevidos();
+      return j(res);
+    }
+
+    // Todas as rotas abaixo agem em nome de um usuário autenticado.
+    const session = await resolveSessionTenant(request);
+
     const idMatch = path.match(/^\/api\/disparos\/([^/]+)\/cancelar$/);
     if (idMatch && request.method === "POST") {
+      const campanhaTenantId = await getCampanhaTenantId(idMatch[1]);
+      if (!campanhaTenantId) return j({ erro: "disparo não encontrado" }, 404);
+      if (!session.isSuperAdmin && campanhaTenantId !== session.tenantId) {
+        return j({ erro: "esse disparo não pertence à sua clínica" }, 403);
+      }
       await cancelarDisparo(idMatch[1]);
       return j({ ok: true });
     }
@@ -340,20 +374,23 @@ async function handleDisparosRoute(request: Request): Promise<Response> {
         nome?: string;
         tenantId?: string;
         mensagem?: string;
-        wahaSessao?: string;
         contatos?: { telefone: string; nome?: string | null }[];
         janela?: string | null;
         horaAgendamento?: string | null;
         mensagemIa?: boolean;
       };
-      if (!body.nome || !body.tenantId || !body.mensagem || !body.contatos?.length || !body.wahaSessao) {
-        return j({ erro: "nome, tenantId, mensagem, contatos e wahaSessao são obrigatórios" }, 400);
+      if (!body.nome || !body.mensagem || !body.contatos?.length) {
+        return j({ erro: "nome, mensagem e contatos são obrigatórios" }, 400);
       }
+      const tenantId = resolveTargetTenantId(session, body.tenantId);
+      const wahaSessao = await getTenantWahaSessao(tenantId);
+      if (!wahaSessao) return j({ erro: "clínica sem WhatsApp configurado" }, 400);
+
       const res = await criarDisparoA({
         nome: body.nome,
-        tenantId: body.tenantId,
+        tenantId,
         mensagem: body.mensagem,
-        wahaSessao: body.wahaSessao,
+        wahaSessao,
         contatos: body.contatos,
         janela: body.janela,
         horaAgendamento: body.horaAgendamento,
@@ -362,18 +399,15 @@ async function handleDisparosRoute(request: Request): Promise<Response> {
       return j({ id: res.id, next_due: res.next_due }, 201);
     }
 
-    if (request.method === "GET" && path === "/api/disparos/devidos") {
-      const res = await executarDevidos();
-      return j(res);
-    }
-
     if (request.method === "GET" && path === "/api/disparos") {
+      if (!session.isSuperAdmin) return j({ erro: "acesso restrito" }, 403);
       const disparos = await listarDisparos();
       return j({ data: disparos });
     }
 
     return j({ erro: "rota não encontrada" }, 404);
   } catch (e) {
+    if (e instanceof AuthError) return authErrorResponse(e);
     return j({ erro: String((e as Error).message ?? e) }, 500);
   }
 }

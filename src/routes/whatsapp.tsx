@@ -45,7 +45,7 @@ function WhatsappPage() {
         if (cfg) { setNumero(cfg.numero ?? ""); setConectado(cfg.conectado); }
         setSlug(tenant.data?.slug ?? "");
         if (cfg?.conectado && tenant.data?.slug) {
-          checarStatus(tenant.data.slug, tenantId);
+          checarStatus();
         }
       } catch (e) {
         toast.error(String(e));
@@ -55,9 +55,18 @@ function WhatsappPage() {
     })();
   }, [tenantId]);
 
-  async function checarStatus(s = slug, t = tenantId) {
+  // Cabeçalho de autenticação: o servidor sempre deriva a clínica do próprio
+  // token de sessão — nunca confia em slug/tenantId enviados pelo cliente.
+  async function authHeaders(): Promise<HeadersInit> {
+    const { data } = await supabase.auth.getSession();
+    const token = data.session?.access_token;
+    return { "content-type": "application/json", ...(token ? { authorization: `Bearer ${token}` } : {}) };
+  }
+
+  async function checarStatus() {
     try {
-      const res = await fetch(`/api/whatsapp/status?slug=${s}&tenantId=${t}`);
+      const headers = await authHeaders();
+      const res = await fetch(`/api/whatsapp/status`, { headers });
       const d = await res.json();
       setStatusSessao(d.status ?? "");
       setConectado(d.ok === true || d.status === "WORKING");
@@ -88,20 +97,18 @@ function WhatsappPage() {
     setConectando(true);
     setQr(null);
     try {
-      const res = await fetch("/api/whatsapp/conectar", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ slug, tenantId }),
-      });
+      const headers = await authHeaders();
+      const res = await fetch("/api/whatsapp/conectar", { method: "POST", headers, body: JSON.stringify({}) });
       const d = await res.json();
       if (d.ok && d.qr) {
         setQr(d.qr);
         setStatusSessao(d.status);
         // Poll até conectar
         const poll = setInterval(async () => {
-          await checarStatus(slug, tenantId!);
-          const r = await fetch(`/api/whatsapp/status?slug=${slug}&tenantId=${tenantId}`);
+          const h = await authHeaders();
+          const r = await fetch(`/api/whatsapp/status`, { headers: h });
           const s = await r.json();
+          setStatusSessao(s.status ?? "");
           if (s.status === "WORKING" || s.ok) {
             setConectado(true);
             setQr(null);
@@ -121,11 +128,8 @@ function WhatsappPage() {
 
   const desconectar = async () => {
     if (!tenantId || !slug) return;
-    await fetch("/api/whatsapp/desconectar", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ slug, tenantId }),
-    });
+    const headers = await authHeaders();
+    await fetch("/api/whatsapp/desconectar", { method: "POST", headers, body: JSON.stringify({}) });
     setConectado(false);
     setQr(null);
     setStatusSessao("");

@@ -36,6 +36,19 @@ export function nomeSessaoClinica(slug: string): string {
   return `clinica_${slug}`;
 }
 
+/** Busca o slug do tenant no servidor — nunca aceitar slug vindo do cliente. */
+export async function getTenantSlug(tenantId: string): Promise<string | null> {
+  const { data } = await supabaseAdmin.from("tenants").select("slug").eq("id", tenantId).maybeSingle();
+  return data?.slug ?? null;
+}
+
+/** Nome da sessão WAHA do tenant (coluna explícita, ou derivado do slug). */
+export async function getTenantWahaSessao(tenantId: string): Promise<string | null> {
+  const { data } = await supabaseAdmin.from("tenants").select("slug, waha_sessao").eq("id", tenantId).maybeSingle();
+  if (!data) return null;
+  return data.waha_sessao || nomeSessaoClinica(data.slug);
+}
+
 /** Cria e inicia a sessão WAHA da clínica, retornando o QR. */
 export async function iniciarConexaoWhatsapp(slug: string): Promise<{
   ok: boolean;

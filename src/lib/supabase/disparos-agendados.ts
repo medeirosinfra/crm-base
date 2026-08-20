@@ -179,6 +179,12 @@ export async function executarDevidos(): Promise<{ executados: number }> {
   return { executados };
 }
 
+/** Busca o tenant_id dono de uma campanha (para checagem de posse antes de agir sobre ela). */
+export async function getCampanhaTenantId(id: string): Promise<string | null> {
+  const { data } = await supabaseAdmin.from("campanhas").select("tenant_id").eq("id", id).maybeSingle();
+  return data?.tenant_id ?? null;
+}
+
 /** Cancela um disparo agendado (se ainda não enviado). */
 export async function cancelarDisparo(id: string): Promise<void> {
   const { error } = await supabaseAdmin.from("campanhas").update({ status: "cancelada" }).eq("id", id);
